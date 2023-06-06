@@ -20,7 +20,7 @@ android {
         }
 
         python {
-            buildPython "/usr/bin/python3"
+            buildPython "C:\\Users\\shalo\\AppData\\Local\\Microsoft\\WindowsApps\\python.exe"
             pip {
                 // A requirement specifier, with or without a version number:
                 install "numpy"}

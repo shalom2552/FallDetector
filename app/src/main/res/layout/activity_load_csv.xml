@@ -16,13 +16,16 @@
         android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="30dp"
-        android:text="Type file name to open:" />
+        android:gravity="center"
+        android:textSize="20dp"
+        android:text="select file to open:" />
 
-    <EditText
-        android:id="@+id/load_file_name_txt"
-        android:layout_width="128dp"
+    <Spinner
+        android:id="@+id/spinner_file_name"
+        android:layout_width="360dp"
         android:layout_height="wrap_content"
-        android:hint="file name..." />
+        android:background="@android:drawable/btn_dropdown"
+        android:spinnerMode="dropdown" />
 
     <Button
         android:id="@+id/load_btn"
@@ -35,6 +38,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="back" />
+
+    <TextView
+        android:id="@+id/textview_number_steps"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:textSize="40dp"
+        android:gravity="center"
+        android:text="0" />
 
 
 </LinearLayout>

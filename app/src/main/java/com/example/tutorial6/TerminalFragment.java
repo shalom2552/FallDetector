@@ -15,6 +15,7 @@ import android.os.IBinder;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
@@ -34,6 +35,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -52,14 +56,15 @@ import java.util.Date;
 import java.util.SplittableRandom;
 
 
-
-// TODO 1. translate the graph to show N
-// TODO 2. TextView of calculated steps on RT
+// Done 1. translate the graph to show N
+// Done 2. TextView of calculated steps on RT
 // TODO 3. stop button stops the count
-// TODO 4. reset button reset steps count
-// TODO 5. save button request fie name on click (remove old field)
-// TODO 6. add csv field that represent STEPS OF NUMBER ESTIMATED holds the calculated num of steps
-// TODO 7. load file from a list of files in the csv_dir
+// Done 4. reset button reset steps count
+// Done 5. save button request file name on click (remove old field)
+// Done 6. add csv field that represent STEPS OF NUMBER ESTIMATED holds the calculated num of steps
+// TODO 6. calculate csv field that represent STEPS_OF_NUMBER_ESTIMATED
+// Done 7. load file from a list of files in the csv_dir
+// TODO 8. update textview_number_steps
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -79,17 +84,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private String newline = TextUtil.newline_crlf;
 
     LineChart mpLineChart;
-    LineDataSet lineDataSetX;
-    LineDataSet lineDataSetY;
-    LineDataSet lineDataSetZ;
+    LineDataSet lineDataSet;
     ArrayList<ILineDataSet> dataSets = new ArrayList<>();
     LineData data;
     Boolean recording = Boolean.FALSE;
     ArrayList<String[]> received_values = new ArrayList<>();
+    Integer estimatedNumberOfSteps = 0;
 
 
     EditText editText_num_steps;
     EditText editText_filename;
+    TextView textview_number_steps;
     Spinner spinner_state;
 
     Float start_time;
@@ -106,6 +111,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         setHasOptionsMenu(true);
         setRetainInstance(true);
         deviceAddress = getArguments().getString("device");
+
+        if (! Python.isStarted()){
+            Python.start(new AndroidPlatform(getActivity()));
+        }
+        Python py = Python.getInstance();
+        PyObject pyobj = py.getModule("python");
+//        PyObject obj = pyobj.callAttr("main", );
+
     }
 
     @Override
@@ -190,7 +203,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
         editText_num_steps = (EditText) view.findViewById(R.id.edittext_num_steps);
         editText_filename = (EditText) view.findViewById(R.id.edittext_filename);
+        textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps); // TODO calculate on RT
         spinner_state = view.findViewById(R.id.spinner_state);
+
+        textview_number_steps.setText("5");
 
 
         // set spinner to have Walking and Running options
@@ -217,6 +233,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         reset_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                estimatedNumberOfSteps = 0;
                 // reset data
                 resetData();
                 // clear chart
@@ -229,22 +246,27 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         save_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Get file name from user
-                String file_name = editText_filename.getText().toString();
-                // Get number of steps from user
-                String num_steps = editText_num_steps.getText().toString();
-                // Get state from user
-                String state = spinner_state.getSelectedItem().toString();
-                // path to save file
-                String path = "/sdcard/csv_dir/";
-                try {
-                    setUpCsv(path, file_name, num_steps, state);
-                    clearChart();
-                    resetData();
-                    toast("File " + file_name + ".csv Saved Successfully!");
-                } catch (Exception e){
-                    toast("Cannot save file!");
-                    e.printStackTrace();
+                String text = editText_filename.getText().toString().trim();
+                if (TextUtils.isEmpty(text)) {
+                    toast("Please Enter File Name First!");
+                } else {
+                    // Get file name from user
+                    String file_name = editText_filename.getText().toString();
+                    // Get number of steps from user
+                    String num_steps = editText_num_steps.getText().toString();
+                    // Get state from user
+                    String state = spinner_state.getSelectedItem().toString();
+                    // path to save file
+                    String path = "/sdcard/csv_dir/";
+                    try {
+                        setUpCsv(path, file_name, num_steps, state);
+                        clearChart();
+                        resetData();
+                        toast("File " + file_name + ".csv Saved Successfully!");
+                    } catch (Exception e) {
+                        toast("Cannot save file!");
+                        e.printStackTrace();
+                    }
                 }
             }
         });
@@ -258,27 +280,19 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
 
         mpLineChart = (LineChart) view.findViewById(R.id.line_chart);
-        lineDataSetX = new LineDataSet(emptyDataValues(), "X axis");
-        lineDataSetY = new LineDataSet(emptyDataValues(), "Y axis");
-        lineDataSetZ = new LineDataSet(emptyDataValues(), "Z axis");
 
-        dataSets.add(lineDataSetX);
-        dataSets.add(lineDataSetY);
-        dataSets.add(lineDataSetZ);
+        lineDataSet = new LineDataSet(emptyDataValues(), "Norma");
+        lineDataSet.setCircleColor(Color.RED);
+        lineDataSet.setColor(Color.BLUE);
+
+        dataSets.add(lineDataSet);
+
         data = new LineData(dataSets);
         mpLineChart.setData(data);
         mpLineChart.invalidate();
 
-        Button buttonClear = (Button) view.findViewById(R.id.button1);
         Button buttonCsvShow = (Button) view.findViewById(R.id.button2);
 
-
-        buttonClear.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                toast("Clear");
-                clearChart();
-            }
-        });
 
         buttonCsvShow.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -309,10 +323,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void clearChart() {  // TODO clear chart focus (could by times)
         LineData data = mpLineChart.getData();
-        ILineDataSet setX = data.getDataSetByIndex(0);
-        ILineDataSet setY = data.getDataSetByIndex(1);
-        ILineDataSet setZ = data.getDataSetByIndex(2);
-        while (setX.removeLast() && setY.removeLast() && setZ.removeLast()) { }
+        ILineDataSet set = data.getDataSetByIndex(0);
+        while (set.removeLast()) {
+        }
         mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
         mpLineChart.invalidate(); // refresh
         first = Boolean.TRUE;
@@ -428,36 +441,26 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     parts = clean_str(parts);
 
                     float floatTime = roundFloat(Float.parseFloat(parts[3]));
-                    if (first){
+                    if (first) {
                         first = Boolean.FALSE;
                         start_time = floatTime;
                     }
-//                    else if (stopped) {
-//                        stopped = Boolean.FALSE;
-//                        start_time = floatTime + roundFloat(Float.parseFloat(received_values.get(-1)[3]));
-//                    }
 
                     floatTime -= start_time;
-                    String row[]= new String[]{String.valueOf(floatTime),parts[0],parts[1], parts[2]};
+                    String row[] = new String[]{String.valueOf(floatTime), parts[0], parts[1], parts[2]};
 
                     received_values.add(row);
 
-                    data.addEntry(new Entry(floatTime,Float.parseFloat(parts[1])),1);
-                    data.addEntry(new Entry(floatTime,Float.parseFloat(parts[0])),0);
-                    data.addEntry(new Entry(floatTime,Float.parseFloat(parts[2])),2);
+                    float x = Float.parseFloat(parts[0]);
+                    float y = Float.parseFloat(parts[1]);
+                    float z = Float.parseFloat(parts[2]);
 
-                    System.out.println(floatTime);
+                    float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
 
+                    data.addEntry(new Entry(floatTime, norma), 0);
 
-                    lineDataSetX.notifyDataSetChanged(); // let the data know a dataSet changed
-                    lineDataSetX.setColor(Color.RED);
-                    lineDataSetX.setCircleColor(Color.RED);
-                    lineDataSetY.notifyDataSetChanged(); // let the data know a dataSet changed
-                    lineDataSetY.setColor(Color.GREEN);
-                    lineDataSetY.setCircleColor(Color.GREEN);
-                    lineDataSetZ.notifyDataSetChanged(); // let the data know a dataSet changed
-                    lineDataSetZ.setColor(Color.BLUE);
-                    lineDataSetZ.setCircleColor(Color.BLUE);
+                    lineDataSet.notifyDataSetChanged(); // let the data know a dataSet changed
+
                     mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
                     mpLineChart.invalidate(); // refresh
 
@@ -501,7 +504,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public void onSerialRead(byte[] data) {
         try {
-            if (recording){
+            if (recording) {
                 receive(data);
             }
         } catch (Exception e) {
@@ -525,11 +528,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             csvWriter.writeNext(new String[]{"EXPERIMENT TIME:", dateFormat.format(date), "", ""});
             csvWriter.writeNext(new String[]{"ACTIVITY TYPE:", state, "", ""});
             csvWriter.writeNext(new String[]{"COUNT OF ACTUAL STEPS:", num_steps, "", ""});
+            csvWriter.writeNext(new String[]{"ESTIMATED NUMBER OF STEPS:", Integer.toString(estimatedNumberOfSteps), "", ""});
             csvWriter.writeNext(new String[]{});
             csvWriter.writeNext(new String[]{"Time [sec]", "ACC X", "ACC Y", "ACC Z"});
 
             String[] strings;
-            for (int i=0; i < received_values.size() ; i++){
+            for (int i = 0; i < received_values.size(); i++) {
                 strings = received_values.get(i);
                 csvWriter.writeNext(strings);
             }

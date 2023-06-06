@@ -7,10 +7,15 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
@@ -18,6 +23,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import com.opencsv.CSVReader;
+
 import java.io.File;
 import java.io.FileReader;
 import java.nio.file.FileSystemNotFoundException;
@@ -34,41 +40,62 @@ public class LoadCSV extends AppCompatActivity {
         Button BackButton = (Button) findViewById(R.id.button_back);
         LineChart lineChart = (LineChart) findViewById(R.id.line_chart);
 
+        // initialize python
+        if (! Python.isStarted()){ Python.start(new AndroidPlatform(this)); }
+        Python py = Python.getInstance();
+        PyObject pyobj = py.getModule("python");
+
         // get element from activity
         Button loadBtn = findViewById(R.id.load_btn);
-        TextView fileName = findViewById(R.id.load_file_name_txt);
+        Spinner spinnerFiles = findViewById(R.id.spinner_file_name);
+        TextView calculatedNumberSteps = findViewById(R.id.textview_number_steps);
+
+        // get list of all csv in the directory
+        final File folder = new File("/sdcard/csv_dir/");
+        ArrayList<String> files = listFilesForFolder(folder);
+
+        // set spinner to have Walking and Running options
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, files);
+        spinnerFiles.setAdapter(adapter);
 
         // on click load button
         loadBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
-                    String path = "/sdcard/csv_dir/" + fileName.getText() + ".csv";
+                    String fileName = spinnerFiles.getSelectedItem().toString();
+                    String path = "/sdcard/csv_dir/" + fileName;
                     ArrayList<String[]> csvData = new ArrayList<>();
                     csvData = CsvRead(path);
 
-//                    System.out.println(DataValues(csvData).get(0));
-//                    System.out.println(DataValues(csvData).get(1));
-//                    System.out.println(DataValues(csvData).get(2));
+                    for (int i = 0; i < csvData.size(); i++) {
+                        String[] line = csvData.get(i);
+                        if (line[0].contains("ESTIMATED")){
+                            Integer numberSteps = Integer.parseInt(csvData.get(i)[1]);
+                            calculatedNumberSteps.setText(Integer.toString(numberSteps));
+                            break;
+                        }
+                    }
 
-                    LineDataSet lineDataSetX = new LineDataSet(DataValues(csvData).get(0), "ACC X");
-                    lineDataSetX.setColor(Color.RED);
-                    lineDataSetX.setCircleColor(Color.RED);
-                    LineDataSet lineDataSetY = new LineDataSet(DataValues(csvData).get(1), "ACC Y");
-                    lineDataSetY.setColor(Color.GREEN);
-                    lineDataSetY.setCircleColor(Color.GREEN);
-                    LineDataSet lineDataSetZ = new LineDataSet(DataValues(csvData).get(2), "ACC Z");
-                    lineDataSetZ.setColor(Color.BLUE);
-                    lineDataSetZ.setCircleColor(Color.BLUE);
+
+                    LineDataSet lineDataSetN = new LineDataSet(DataValues(csvData).get(0), "Norma");
+                    lineDataSetN.setColor(Color.RED);
+                    lineDataSetN.setCircleColor(Color.BLUE);
+
+//                    // todo test
+//                    PyObject obj = pyobj.callAttr("main", DataArray(csvData));
+//                    int numberSteps = obj.toInt();
+//                    calculatedNumberSteps.setText(Integer.toString(numberSteps));
+//                    // todo test
 
                     ArrayList<ILineDataSet> dataSets = new ArrayList<>();
-                    dataSets.add(lineDataSetX);
-                    dataSets.add(lineDataSetY);
-                    dataSets.add(lineDataSetZ);
+                    dataSets.add(lineDataSetN);
+
                     LineData data = new LineData(dataSets);
                     lineChart.setData(data);
                     lineChart.invalidate();
-                } catch (Exception e){
+                    toast("File opened successfully!");
+                } catch (Exception e) {
                     e.printStackTrace();
                     toast("Failed to open!");
                 }
@@ -83,42 +110,53 @@ public class LoadCSV extends AppCompatActivity {
         });
     }
 
-    private void ClickBack(){
+    private void ClickBack() {
         finish();
     }
 
-    private ArrayList<String[]> CsvRead(String path){
+    private ArrayList<String[]> CsvRead(String path) {
         ArrayList<String[]> CsvData = new ArrayList<>();
         try {
             File file = new File(path);
             CSVReader reader = new CSVReader(new FileReader(file));
             String[] nextline;
-            while((nextline = reader.readNext())!= null){
-                if(nextline != null){
+            while ((nextline = reader.readNext()) != null) {
+                if (nextline != null) {
                     CsvData.add(nextline);
                 }
             }
-            toast("File opened successfully!");
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return CsvData;
     }
 
-    private ArrayList<ArrayList<Entry>> DataValues(ArrayList<String[]> csvData){
-        ArrayList<Entry> dataValsX = new ArrayList<Entry>();
-        ArrayList<Entry> dataValsY = new ArrayList<Entry>();
-        ArrayList<Entry> dataValsZ = new ArrayList<Entry>();
-        for (int i = 6; i < csvData.size(); i++){
-            dataValsX.add(new Entry(Float.parseFloat(csvData.get(i)[0]), Float.parseFloat(csvData.get(i)[1])));
-            dataValsY.add(new Entry(Float.parseFloat(csvData.get(i)[0]), Float.parseFloat(csvData.get(i)[2])));
-            dataValsZ.add(new Entry(Float.parseFloat(csvData.get(i)[0]), Float.parseFloat(csvData.get(i)[3])));
+    private ArrayList<ArrayList<Entry>> DataValues(ArrayList<String[]> csvData) {
+        ArrayList<Entry> dataValsN = new ArrayList<Entry>();
+
+        for (int i = 7; i < csvData.size(); i++) {
+            float x = Float.parseFloat(csvData.get(i)[1]);
+            float y = Float.parseFloat(csvData.get(i)[2]);
+            float z = Float.parseFloat(csvData.get(i)[3]);
+            float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+            dataValsN.add(new Entry(Float.parseFloat(csvData.get(i)[0]), norma));
         }
         ArrayList<ArrayList<Entry>> dataVals = new ArrayList<>();
-        dataVals.add(dataValsX);
-        dataVals.add(dataValsY);
-        dataVals.add(dataValsZ);
+        dataVals.add(dataValsN);
         return dataVals;
+    }
+
+    private ArrayList<Float> DataArray(ArrayList<String[]> csvData) {
+        ArrayList<Float> dataValsN = new ArrayList<>();
+
+        for (int i = 7; i < csvData.size(); i++) {
+            float x = Float.parseFloat(csvData.get(i)[1]);
+            float y = Float.parseFloat(csvData.get(i)[2]);
+            float z = Float.parseFloat(csvData.get(i)[3]);
+            float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+            dataValsN.add(norma);
+        }
+        return dataValsN;
     }
 
     private void toast(String msg) {
@@ -126,6 +164,20 @@ public class LoadCSV extends AppCompatActivity {
         TextView vv = (TextView) toast.getView().findViewById(android.R.id.message);
         vv.setTextColor(Color.BLACK);
         toast.show();
+    }
+
+    public ArrayList<String> listFilesForFolder(final File folder) {
+        ArrayList<String> filesName = new ArrayList<>();
+        for (final File fileEntry : folder.listFiles()) {
+            if (fileEntry.isDirectory()) {
+                listFilesForFolder(fileEntry);
+            } else {
+                if (!fileEntry.isHidden()) {
+                    filesName.add(fileEntry.getName());
+                }
+            }
+        }
+        return filesName;
     }
 
 }
