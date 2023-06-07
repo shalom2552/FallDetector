@@ -58,13 +58,13 @@ import java.util.SplittableRandom;
 
 // Done 1. translate the graph to show N
 // Done 2. TextView of calculated steps on RT
-// TODO 3. stop button stops the count
+// Done 3. stop button stops the count
 // Done 4. reset button reset steps count
 // Done 5. save button request file name on click (remove old field)
 // Done 6. add csv field that represent STEPS OF NUMBER ESTIMATED holds the calculated num of steps
 // TODO 6. calculate csv field that represent STEPS_OF_NUMBER_ESTIMATED
 // Done 7. load file from a list of files in the csv_dir
-// TODO 8. update textview_number_steps
+// Done 8. update textview_number_steps
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -89,8 +89,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     LineData data;
     Boolean recording = Boolean.FALSE;
     ArrayList<String[]> received_values = new ArrayList<>();
+    ArrayList<Float> received_chunk_values = new ArrayList<>();
     Integer estimatedNumberOfSteps = 0;
 
+    Boolean firstChunk = Boolean.TRUE;
+    Float lastTime;
+    Float currentTime;
 
     EditText editText_num_steps;
     EditText editText_filename;
@@ -99,6 +103,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     Float start_time;
     Boolean first = Boolean.TRUE;
+    PyObject pyobj;
 //    Boolean stopped = Boolean.FALSE;
 
 
@@ -112,12 +117,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         setRetainInstance(true);
         deviceAddress = getArguments().getString("device");
 
-        if (! Python.isStarted()){
+        if (!Python.isStarted()) {
             Python.start(new AndroidPlatform(getActivity()));
         }
         Python py = Python.getInstance();
-        PyObject pyobj = py.getModule("python");
-//        PyObject obj = pyobj.callAttr("main", );
+        pyobj = py.getModule("python");
 
     }
 
@@ -206,8 +210,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps); // TODO calculate on RT
         spinner_state = view.findViewById(R.id.spinner_state);
 
-        textview_number_steps.setText("5");
-
 
         // set spinner to have Walking and Running options
         String[] items = new String[]{"Walking", "Running"};
@@ -218,6 +220,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             @Override
             public void onClick(View v) {
                 recording = Boolean.TRUE;
+                firstChunk = Boolean.TRUE;
             }
         });
 
@@ -226,6 +229,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             @Override
             public void onClick(View v) {
                 recording = Boolean.FALSE;
+                PyObject obj = pyobj.callAttr("main", received_chunk_values);
+                int numberSteps = obj.toInt();
+                estimatedNumberOfSteps += numberSteps;
+                textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
+                // reset chunk data
+                received_chunk_values = new ArrayList<>();
 //                stopped = Boolean.TRUE;
             }
         });
@@ -233,7 +242,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         reset_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                estimatedNumberOfSteps = 0;
+                clearSteps();
                 // reset data
                 resetData();
                 // clear chart
@@ -267,6 +276,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         toast("Cannot save file!");
                         e.printStackTrace();
                     }
+                    clearSteps();
                 }
             }
         });
@@ -319,6 +329,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         TextView vv = (TextView) toast.getView().findViewById(android.R.id.message);
         vv.setTextColor(Color.BLACK);
         toast.show();
+    }
+
+
+    private void clearSteps() {
+        received_chunk_values = new ArrayList<>();
+        estimatedNumberOfSteps = 0;
+        textview_number_steps.setText(estimatedNumberOfSteps.toString());
     }
 
     private void clearChart() {  // TODO clear chart focus (could by times)
@@ -456,6 +473,26 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     float z = Float.parseFloat(parts[2]);
 
                     float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+                    received_chunk_values.add(norma);
+
+                    if (firstChunk) {
+                        lastTime = floatTime;
+                        firstChunk = Boolean.FALSE;
+                    }
+                    currentTime = floatTime;
+
+
+                    if (currentTime - lastTime> 3.0) {
+                        // send it to python
+                        PyObject obj = pyobj.callAttr("main", received_chunk_values);
+                        int numberSteps = obj.toInt();
+                        estimatedNumberOfSteps += numberSteps;
+                        textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
+                        // clear chunk list
+                        received_chunk_values = new ArrayList<>();
+                        // update lastTime
+                        lastTime = currentTime;
+                    }
 
                     data.addEntry(new Entry(floatTime, norma), 0);
 
@@ -511,6 +548,19 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             System.out.println("ERROR!! NO DATA!");
             e.printStackTrace();
         }
+    }
+
+    private ArrayList<Float> DataArray(ArrayList<String[]> csvData) {
+        ArrayList<Float> dataValsN = new ArrayList<>();
+
+        for (int i = 7; i < csvData.size(); i++) {
+            float x = Float.parseFloat(csvData.get(i)[1]);
+            float y = Float.parseFloat(csvData.get(i)[2]);
+            float z = Float.parseFloat(csvData.get(i)[3]);
+            float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+            dataValsN.add(norma);
+        }
+        return dataValsN;
     }
 
     private void setUpCsv(String path, String file_name, String num_steps, String state) {

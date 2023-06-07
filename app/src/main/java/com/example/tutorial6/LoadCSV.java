@@ -40,11 +40,6 @@ public class LoadCSV extends AppCompatActivity {
         Button BackButton = (Button) findViewById(R.id.button_back);
         LineChart lineChart = (LineChart) findViewById(R.id.line_chart);
 
-        // initialize python
-        if (! Python.isStarted()){ Python.start(new AndroidPlatform(this)); }
-        Python py = Python.getInstance();
-        PyObject pyobj = py.getModule("python");
-
         // get element from activity
         Button loadBtn = findViewById(R.id.load_btn);
         Spinner spinnerFiles = findViewById(R.id.spinner_file_name);
@@ -81,12 +76,6 @@ public class LoadCSV extends AppCompatActivity {
                     LineDataSet lineDataSetN = new LineDataSet(DataValues(csvData).get(0), "Norma");
                     lineDataSetN.setColor(Color.RED);
                     lineDataSetN.setCircleColor(Color.BLUE);
-
-//                    // todo test
-//                    PyObject obj = pyobj.callAttr("main", DataArray(csvData));
-//                    int numberSteps = obj.toInt();
-//                    calculatedNumberSteps.setText(Integer.toString(numberSteps));
-//                    // todo test
 
                     ArrayList<ILineDataSet> dataSets = new ArrayList<>();
                     dataSets.add(lineDataSetN);
@@ -146,18 +135,6 @@ public class LoadCSV extends AppCompatActivity {
         return dataVals;
     }
 
-    private ArrayList<Float> DataArray(ArrayList<String[]> csvData) {
-        ArrayList<Float> dataValsN = new ArrayList<>();
-
-        for (int i = 7; i < csvData.size(); i++) {
-            float x = Float.parseFloat(csvData.get(i)[1]);
-            float y = Float.parseFloat(csvData.get(i)[2]);
-            float z = Float.parseFloat(csvData.get(i)[3]);
-            float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-            dataValsN.add(norma);
-        }
-        return dataValsN;
-    }
 
     private void toast(String msg) {
         Toast toast = Toast.makeText(this, msg, Toast.LENGTH_SHORT);

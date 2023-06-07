@@ -17,6 +17,8 @@ def count_peaks(y, threshold=0):
 
 def main(data):
     records = []
+    if data.size() == 0:
+        return 0
     for i in range(data.size()):
         records.append(data.get(i))
 
