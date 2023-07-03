@@ -5,9 +5,11 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -53,18 +55,9 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Objects;
 import java.util.SplittableRandom;
 
-
-// Done 1. translate the graph to show N
-// Done 2. TextView of calculated steps on RT
-// Done 3. stop button stops the count
-// Done 4. reset button reset steps count
-// Done 5. save button request file name on click (remove old field)
-// Done 6. add csv field that represent STEPS OF NUMBER ESTIMATED holds the calculated num of steps
-// TODO 6. calculate csv field that represent STEPS_OF_NUMBER_ESTIMATED
-// Done 7. load file from a list of files in the csv_dir
-// Done 8. update textview_number_steps
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
@@ -73,20 +66,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     private String deviceAddress;
     private SerialService service;
 
-    private TextView receiveText;
-    private TextView sendText;
-    private TextUtil.HexWatcher hexWatcher;
-
     private Connected connected = Connected.False;
     private boolean initialStart = true;
     private boolean hexEnabled = false;
     private boolean pendingNewline = false;
     private String newline = TextUtil.newline_crlf;
 
-    LineChart mpLineChart;
-    LineDataSet lineDataSet;
-    ArrayList<ILineDataSet> dataSets = new ArrayList<>();
-    LineData data;
     Boolean recording = Boolean.FALSE;
     ArrayList<String[]> received_values = new ArrayList<>();
     ArrayList<Float> received_chunk_values = new ArrayList<>();
@@ -96,15 +81,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     Float lastTime;
     Float currentTime;
 
-    EditText editText_num_steps;
-    EditText editText_filename;
     TextView textview_number_steps;
-    Spinner spinner_state;
+    TextView textView_bt_status;
 
     Float start_time;
     Boolean first = Boolean.TRUE;
     PyObject pyobj;
-//    Boolean stopped = Boolean.FALSE;
 
 
     /*
@@ -122,6 +104,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
         Python py = Python.getInstance();
         pyobj = py.getModule("python");
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        Objects.requireNonNull(getActivity()).registerReceiver(mReceiver, filter);
 
     }
 
@@ -196,25 +184,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_terminal, container, false);
-        receiveText = view.findViewById(R.id.receive_text);                          // TextView performance decreases with number of spans
-        receiveText.setTextColor(getResources().getColor(R.color.colorRecieveText)); // set as default color to reduce number of spans
-        receiveText.setMovementMethod(ScrollingMovementMethod.getInstance());
 
         Button start_btn = view.findViewById(R.id.btn_start);
         Button stop_btn = view.findViewById(R.id.btn_stop);
-        Button reset_btn = view.findViewById(R.id.btn_reset);
-        Button save_btn = view.findViewById(R.id.btn_save);
 
-        editText_num_steps = (EditText) view.findViewById(R.id.edittext_num_steps);
-        editText_filename = (EditText) view.findViewById(R.id.edittext_filename);
-        textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps); // TODO calculate on RT
-        spinner_state = view.findViewById(R.id.spinner_state);
-
-
-        // set spinner to have Walking and Running options
-        String[] items = new String[]{"Walking", "Running"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_spinner_dropdown_item, items);
-        spinner_state.setAdapter(adapter);
+        textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps); // TODO
+        textView_bt_status = view.findViewById(R.id.textview_connected_status);
 
         start_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -239,90 +214,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
         });
 
-        reset_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clearSteps();
-                // reset data
-                resetData();
-                // clear chart
-                clearChart();
-                // toast to user
-                toast("reset");
-            }
-        });
-
-        save_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String text = editText_filename.getText().toString().trim();
-                if (TextUtils.isEmpty(text)) {
-                    toast("Please Enter File Name First!");
-                } else {
-                    // Get file name from user
-                    String file_name = editText_filename.getText().toString();
-                    // Get number of steps from user
-                    String num_steps = editText_num_steps.getText().toString();
-                    // Get state from user
-                    String state = spinner_state.getSelectedItem().toString();
-                    // path to save file
-                    String path = "/sdcard/csv_dir/";
-                    try {
-                        setUpCsv(path, file_name, num_steps, state);
-                        clearChart();
-                        resetData();
-                        toast("File " + file_name + ".csv Saved Successfully!");
-                    } catch (Exception e) {
-                        toast("Cannot save file!");
-                        e.printStackTrace();
-                    }
-                    clearSteps();
-                }
-            }
-        });
-        sendText = view.findViewById(R.id.send_text);
-        hexWatcher = new TextUtil.HexWatcher(sendText);
-        hexWatcher.enable(hexEnabled);
-        sendText.addTextChangedListener(hexWatcher);
-        sendText.setHint(hexEnabled ? "HEX mode" : "");
-
-        View sendBtn = view.findViewById(R.id.send_btn);
-        sendBtn.setOnClickListener(v -> send(sendText.getText().toString()));
-
-        mpLineChart = (LineChart) view.findViewById(R.id.line_chart);
-
-        lineDataSet = new LineDataSet(emptyDataValues(), "Norma");
-        lineDataSet.setCircleColor(Color.RED);
-        lineDataSet.setColor(Color.BLUE);
-
-        dataSets.add(lineDataSet);
-
-        data = new LineData(dataSets);
-        mpLineChart.setData(data);
-        mpLineChart.invalidate();
-
-        Button buttonCsvShow = (Button) view.findViewById(R.id.button2);
-
-
-        buttonCsvShow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                OpenLoadCSV();
-
-            }
-        });
 
         return view;
     }
 
-    private void resetData() {
-        // reset data
-        received_values = new ArrayList<>();
-        recording = Boolean.FALSE;
-        // reset fields
-        editText_num_steps.setText(null);
-        editText_filename.setText(null);
-    }
 
     private void toast(String msg) {
         Toast toast = Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT);
@@ -338,15 +233,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         textview_number_steps.setText(estimatedNumberOfSteps.toString());
     }
 
-    private void clearChart() {  // TODO clear chart focus (could by times)
-        LineData data = mpLineChart.getData();
-        ILineDataSet set = data.getDataSetByIndex(0);
-        while (set.removeLast()) {
-        }
-        mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
-        mpLineChart.invalidate(); // refresh
-        first = Boolean.TRUE;
-    }
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
@@ -358,7 +244,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.clear) {
-            receiveText.setText("");
             return true;
         } else if (id == R.id.newline) {
             String[] newlineNames = getResources().getStringArray(R.array.newline_names);
@@ -374,9 +259,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             return true;
         } else if (id == R.id.hex) {
             hexEnabled = !hexEnabled;
-            sendText.setText("");
-            hexWatcher.enable(hexEnabled);
-            sendText.setHint(hexEnabled ? "HEX mode" : "");
             item.setChecked(hexEnabled);
             return true;
         } else {
@@ -434,7 +316,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
             SpannableStringBuilder spn = new SpannableStringBuilder(msg + '\n');
             spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorSendText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            receiveText.append(spn);
             service.write(data);
         } catch (Exception e) {
             onSerialIoError(e);
@@ -443,7 +324,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void receive(byte[] message) {
         if (hexEnabled) {
-            receiveText.append(TextUtil.toHexString(message) + '\n');
         } else {
             String msg = new String(message);
             if (newline.equals(TextUtil.newline_crlf) && msg.length() > 0) {
@@ -482,7 +362,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     currentTime = floatTime;
 
 
-                    if (currentTime - lastTime> 3.0) {
+                    if (currentTime - lastTime > 3.0) {
                         // send it to python
                         PyObject obj = pyobj.callAttr("main", received_chunk_values);
                         int numberSteps = obj.toInt();
@@ -494,33 +374,20 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         lastTime = currentTime;
                     }
 
-                    data.addEntry(new Entry(floatTime, norma), 0);
-
-                    lineDataSet.notifyDataSetChanged(); // let the data know a dataSet changed
-
-                    mpLineChart.notifyDataSetChanged(); // let the chart know it's data changed
-                    mpLineChart.invalidate(); // refresh
+                    // here was mp_line chart update
 
                 }
 
                 msg = msg.replace(TextUtil.newline_crlf, TextUtil.newline_lf);
-                // send msg to function that saves it to csv
-                // special handling if CR and LF come in separate fragments
-                if (pendingNewline && msg.charAt(0) == '\n') {
-                    Editable edt = receiveText.getEditableText();
-                    if (edt != null && edt.length() > 1)
-                        edt.replace(edt.length() - 2, edt.length(), "");
-                }
+
                 pendingNewline = msg.charAt(msg.length() - 1) == '\r';
             }
-            receiveText.append(TextUtil.toCaretString(msg, newline.length() != 0));
         }
     }
 
     private void status(String str) {
         SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
         spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        receiveText.append(spn);
     }
 
     /*
@@ -616,4 +483,34 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         String roundedValueString = decimalFormat.format(value);
         return Float.parseFloat(roundedValueString);
     }
+
+
+    //The BroadcastReceiver that listens for bluetooth broadcasts
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @SuppressLint("SetTextI18n")
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+//           ... //Device found
+            }
+            else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
+                assert device != null;
+                toast("Device " + device.getName() + " Connected!");
+                textView_bt_status.setText("Device Connected!");            }
+            else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+//           ... //Done searching
+            }
+            else if (BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED.equals(action)) {
+//           ... //Device is about to disconnect
+            }
+            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+//           ... //Device has disconnected
+            }
+
+        }
+    };
+
 }
