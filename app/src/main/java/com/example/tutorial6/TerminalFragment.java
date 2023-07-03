@@ -86,6 +86,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     Float start_time;
     Boolean first = Boolean.TRUE;
+
+    Boolean start = false;
+
     PyObject pyobj;
 
 
@@ -186,34 +189,32 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         View view = inflater.inflate(R.layout.fragment_terminal, container, false);
 
         Button start_btn = view.findViewById(R.id.btn_start);
-        Button stop_btn = view.findViewById(R.id.btn_stop);
 
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps); // TODO
         textView_bt_status = view.findViewById(R.id.textview_connected_status);
 
+
         start_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                recording = Boolean.TRUE;
-                firstChunk = Boolean.TRUE;
+                if (start){
+                    recording = Boolean.TRUE;
+                    firstChunk = Boolean.TRUE;
+                    start_btn.setText("Start");
+                    start = false;
+                } else {
+                    recording = Boolean.FALSE;
+                    PyObject obj = pyobj.callAttr("main", received_chunk_values);
+                    int numberSteps = obj.toInt();
+                    estimatedNumberOfSteps += numberSteps;
+                    textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
+                    // reset chunk data
+                    received_chunk_values = new ArrayList<>();
+                    start_btn.setText("Stop");
+                    start = true;
+                }
             }
         });
-
-
-        stop_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                recording = Boolean.FALSE;
-                PyObject obj = pyobj.callAttr("main", received_chunk_values);
-                int numberSteps = obj.toInt();
-                estimatedNumberOfSteps += numberSteps;
-                textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
-                // reset chunk data
-                received_chunk_values = new ArrayList<>();
-//                stopped = Boolean.TRUE;
-            }
-        });
-
 
         return view;
     }
