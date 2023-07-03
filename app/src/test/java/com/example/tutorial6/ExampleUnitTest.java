@@ -1,4 +1,4 @@
-package com.example.tutorial6;
+package com.example.inFallible;
 
 import org.junit.Test;
 
