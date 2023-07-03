@@ -3,6 +3,7 @@ package com.example.tutorial6;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -14,6 +15,7 @@ import android.content.ServiceConnection;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.telephony.SmsManager;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -87,7 +89,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     Float start_time;
     Boolean first = Boolean.TRUE;
 
-    Boolean start = false;
+    Boolean start = true;
 
     PyObject pyobj;
 
@@ -197,10 +199,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         start_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (start){
+                if (start) {
                     recording = Boolean.TRUE;
                     firstChunk = Boolean.TRUE;
-                    start_btn.setText("Start");
+                    start_btn.setText("Stop");
                     start = false;
                 } else {
                     recording = Boolean.FALSE;
@@ -210,11 +212,28 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
                     // reset chunk data
                     received_chunk_values = new ArrayList<>();
-                    start_btn.setText("Stop");
+                    start_btn.setText("Start");
                     start = true;
                 }
             }
         });
+
+        // todo sms func
+        Button btnSenSMS = view.findViewById(R.id.btn_send_sms);
+
+        btnSenSMS.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Getting intent and PendingIntent instance
+                Intent intent=new Intent(service.getApplicationContext(),MainActivity.class);
+                PendingIntent pi=PendingIntent.getActivity(service.getApplicationContext(), 0, intent,0);
+
+//Get the SmsManager instance and call the sendTextMessage method to send message
+                SmsManager sms=SmsManager.getDefault();
+                sms.sendTextMessage("0587708484", null, "hello from shalom", pi,null);
+            }
+        });
+
 
         return view;
     }
@@ -496,18 +515,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
 //           ... //Device found
-            }
-            else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
-                assert device != null;
-                toast("Device " + device.getName() + " Connected!");
-                textView_bt_status.setText("Device Connected!");            }
-            else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+            } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
+                try {
+                    toast("Device " + device.getName() + " Connected!");
+                    textView_bt_status.setText("Device Connected!");
+                } catch (Exception e) {
+                }
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
 //           ... //Done searching
-            }
-            else if (BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED.equals(action)) {
+            } else if (BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED.equals(action)) {
 //           ... //Device is about to disconnect
-            }
-            else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+            } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
 //           ... //Device has disconnected
             }
 
