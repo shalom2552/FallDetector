@@ -1,5 +1,6 @@
 package com.example.tutorial6;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -12,15 +13,16 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.telephony.SmsManager;
-import android.text.Editable;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.text.TextUtils;
-import android.text.method.ScrollingMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,25 +30,19 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
-import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.opencsv.CSVWriter;
 
 import java.io.File;
@@ -58,7 +54,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Objects;
-import java.util.SplittableRandom;
+
 
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
@@ -88,11 +84,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     Float start_time;
     Boolean first = Boolean.TRUE;
-
     Boolean start = true;
-
     PyObject pyobj;
-
 
     /*
      * Lifecycle
@@ -191,6 +184,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         View view = inflater.inflate(R.layout.fragment_terminal, container, false);
 
         Button start_btn = view.findViewById(R.id.btn_start);
+        Button clear_steps_btn = view.findViewById(R.id.btn_clear_steps);
 
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps); // TODO
         textView_bt_status = view.findViewById(R.id.textview_connected_status);
@@ -218,24 +212,45 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
         });
 
-        // todo sms func
-        Button btnSenSMS = view.findViewById(R.id.btn_send_sms);
-
-        btnSenSMS.setOnClickListener(new View.OnClickListener() {
+        clear_steps_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //Getting intent and PendingIntent instance
-                Intent intent=new Intent(service.getApplicationContext(),MainActivity.class);
-                PendingIntent pi=PendingIntent.getActivity(service.getApplicationContext(), 0, intent,0);
+                clearSteps();
+            }
+        });
 
-//Get the SmsManager instance and call the sendTextMessage method to send message
-                SmsManager sms=SmsManager.getDefault();
-                sms.sendTextMessage("0587708484", null, "hello from shalom", pi,null);
+        // todo sms func
+        Button btnSendSMS = view.findViewById(R.id.btn_send_sms);
+
+        btnSendSMS.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String msg = "Hi!";
+                SendSMS(msg);
+                toast("SMS Sent successfully!");
             }
         });
 
 
         return view;
+    }
+
+    private void SendSMS(String msg){
+
+        // Create the Google Maps link
+        String googleMapsLink = "https://www.google.com/maps?q=" + "latitude" + "," + "longitude"; // todo
+
+        // Create the message body with the Google Maps link
+        String messageBody = "Click here to view the location: " + googleMapsLink;
+
+
+        //Getting intent and PendingIntent instance
+        Intent intent=new Intent(service.getApplicationContext(),MainActivity.class);
+        PendingIntent pi=PendingIntent.getActivity(service.getApplicationContext(), 0, intent,0);
+
+        //Get the SmsManager instance and call the sendTextMessage method to send message
+        SmsManager sms=SmsManager.getDefault();
+        sms.sendTextMessage("0587708484", null, "hello from shalom", pi,null);
     }
 
 
