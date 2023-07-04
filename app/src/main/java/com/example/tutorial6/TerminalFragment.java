@@ -245,12 +245,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
 
         //Getting intent and PendingIntent instance
-        Intent intent=new Intent(service.getApplicationContext(),MainActivity.class);
+        Intent intent=new Intent(service.getApplicationContext(),TerminalFragment.class);
         PendingIntent pi=PendingIntent.getActivity(service.getApplicationContext(), 0, intent,0);
 
         //Get the SmsManager instance and call the sendTextMessage method to send message
         SmsManager sms=SmsManager.getDefault();
-        sms.sendTextMessage("0587708484", null, "hello from shalom", pi,null);
+        sms.sendTextMessage("0587708484", null, msg, pi,null);
     }
 
 
