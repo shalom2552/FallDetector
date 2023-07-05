@@ -51,7 +51,7 @@ public class DevicesFragment extends ListFragment {
         String DEVICE_ADDRESS = "94:B5:55:34:0F:32";
         Bundle bundle = new Bundle();
         bundle.putString("device", DEVICE_ADDRESS);
-        Intent intent = new Intent(getActivity(), NewActivity.class);
+        Intent intent = new Intent(getActivity(), NavigationActivity.class);
         intent.putExtra("device", bundle);
         startActivity(intent);
 

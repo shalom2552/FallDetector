@@ -4,11 +4,13 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.mikephil.charting.data.LineData;
@@ -22,6 +24,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE = 1;
 
+    @RequiresApi(api = Build.VERSION_CODES.S)
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
@@ -40,10 +43,17 @@ public class WelcomeActivity extends AppCompatActivity {
             if (checkSelfPermission(Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_DENIED) {
                 Log.d("permission", "permission denied to SEND_SMS - requesting it");
                 String[] permissions = {Manifest.permission.SEND_SMS};
-                requestPermissions(permissions, PERMISSION_REQUEST_CODE);  // todo check PERMISSION_REQUEST_CODE
+                requestPermissions(permissions, PERMISSION_REQUEST_CODE);
+            }
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
+                String[] permissions = {Manifest.permission.BLUETOOTH_CONNECT};
+                requestPermissions(permissions, 3);
+            }
+            if (checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_DENIED) {
+                String[] permissions = {Manifest.permission.BLUETOOTH_SCAN};
+                requestPermissions(permissions, 2);
             }
         }
-
     }
 
     private void StartApp(){
