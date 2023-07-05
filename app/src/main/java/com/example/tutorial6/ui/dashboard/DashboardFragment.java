@@ -15,6 +15,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.telephony.SmsManager;
@@ -33,6 +34,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -40,6 +42,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
+import com.example.tutorial6.NavigationActivity;
 import com.example.tutorial6.R;
 import com.example.tutorial6.SerialListener;
 import com.example.tutorial6.SerialService;
@@ -99,6 +102,14 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         Objects.requireNonNull(getActivity()).registerReceiver(mReceiver, filter);
+
+//        //        String DEVICE_ADDRESS = "94:B5:55:34:0F:32";
+//        String DEVICE_ADDRESS = "YAS2";
+//        Bundle bundle = new Bundle();
+//        bundle.putString("device", DEVICE_ADDRESS);
+//        Intent intent = new Intent(getActivity(), NavigationActivity.class);
+//        intent.putExtra("device", bundle);
+//        startActivity(intent);
     }
 
 
@@ -231,6 +242,7 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.S)
     @SuppressLint("UnlocalizedSms")
     private void SendSMS(String msg) {
 
@@ -245,11 +257,12 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
             //Getting intent and PendingIntent instance
             Intent intent = new Intent(service.getApplicationContext(), DashboardFragment.class);
             @SuppressLint("UnspecifiedImmutableFlag")
-            PendingIntent pi = PendingIntent.getActivity(service.getApplicationContext(), 0, intent, 0);
+            PendingIntent pi = PendingIntent.getActivity(service.getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE);
 
             //Get the SmsManager instance and call the sendTextMessage method to send message
             SmsManager sms = SmsManager.getDefault();
-            sms.sendTextMessage("0587708484", null, msg, pi, null);
+            sms.sendTextMessage("0526859466", null, msg, pi, null);
+//            sms.sendTextMessage("0587708484", null, msg, pi, null);
 
             toast("SMS Sent successfully!");
 
