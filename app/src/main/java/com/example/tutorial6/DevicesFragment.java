@@ -117,9 +117,13 @@ public class DevicesFragment extends ListFragment {
         BluetoothDevice device = listItems.get(position-1);
         Bundle args = new Bundle();
         args.putString("device", device.getAddress());
-        Fragment fragment = new TerminalFragment();
-        fragment.setArguments(args);
-        getFragmentManager().beginTransaction().replace(R.id.fragment, fragment, "terminal").addToBackStack(null).commit();
+        System.out.println("DDDD "+ device.getAddress());
+        Intent intent = new Intent(getActivity(), NavigationActivity.class);
+        intent.putExtra("device", args);
+        startActivity(intent);
+//        Fragment fragment = new TerminalFragment();
+//        fragment.setArguments(args);
+//        getFragmentManager().beginTransaction().replace(R.id.fragment, fragment, "terminal").addToBackStack(null).commit();
     }
 
     /**

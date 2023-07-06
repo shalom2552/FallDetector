@@ -49,9 +49,14 @@ import com.example.tutorial6.SerialService;
 import com.example.tutorial6.SerialSocket;
 import com.example.tutorial6.TextUtil;
 import com.example.tutorial6.databinding.FragmentDashboardBinding;
+import com.example.tutorial6.ui.home.HomeFragment;
+import com.opencsv.CSVReader;
 
+import java.io.File;
+import java.io.FileReader;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
 
 public class DashboardFragment extends Fragment implements ServiceConnection, SerialListener {
@@ -89,7 +94,6 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
 
         if (!Python.isStarted()) {
             Python.start(new AndroidPlatform(getActivity()));
@@ -228,7 +232,11 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
             @Override
             public void onClick(View view) {
                 String msg = "Hi!";
-                SendSMS(msg);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    SendSMS(msg);
+                } else {
+                    toast("Failed! SDK Version!");
+                }
             }
         });
 
@@ -247,21 +255,33 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
     private void SendSMS(String msg) {
 
         try {
-            // Create the Google Maps link
-            String googleMapsLink = "https://www.google.com/maps?q=" + "latitude" + "," + "longitude"; // todo
+//            // Create the Google Maps link
+//            String googleMapsLink = "https://www.google.com/maps?q=" + "latitude" + "," + "longitude"; // todo
+//            // Create the message body with the Google Maps link
+//            String messageBody = "Click here to view the location: " + googleMapsLink;
 
-            // Create the message body with the Google Maps link
-            String messageBody = "Click here to view the location: " + googleMapsLink;
+            String fileName = "contacts.csv";
+            String path = "/sdcard/csv_dir/contacts/" + fileName;
+            ArrayList<String[]> csvData = CsvRead(path);
+            String contactName = "";
+            String contactNumber = "";
 
+            for (int i = 0; i < csvData.size(); i++) { // todo change if you want more then one contacts
+                String[] line = csvData.get(i);
+                contactName = line[0];
+                contactNumber = line[1];
+                break;
+            }
 
             //Getting intent and PendingIntent instance
             Intent intent = new Intent(service.getApplicationContext(), DashboardFragment.class);
             @SuppressLint("UnspecifiedImmutableFlag")
             PendingIntent pi = PendingIntent.getActivity(service.getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE);
 
+            System.out.println("0" + contactNumber); // todo
             //Get the SmsManager instance and call the sendTextMessage method to send message
             SmsManager sms = SmsManager.getDefault();
-            sms.sendTextMessage("0526859466", null, msg, pi, null);
+            sms.sendTextMessage(contactNumber, null, msg + "" + contactName, pi, null);
 //            sms.sendTextMessage("0587708484", null, msg, pi, null);
 
             toast("SMS Sent successfully!");
@@ -282,6 +302,23 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
         received_chunk_values = new ArrayList<>();
         estimatedNumberOfSteps = 0;
         textview_number_steps.setText(estimatedNumberOfSteps.toString());
+    }
+
+    private ArrayList<String[]> CsvRead(String path) {
+        ArrayList<String[]> CsvData = new ArrayList<>();
+        try {
+            File file = new File(path);
+            CSVReader reader = new CSVReader(new FileReader(file));
+            String[] nextline;
+            while ((nextline = reader.readNext()) != null) {
+                if (nextline != null) {
+                    CsvData.add(nextline);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return CsvData;
     }
 
 

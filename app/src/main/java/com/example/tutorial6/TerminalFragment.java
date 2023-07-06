@@ -437,19 +437,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
-    private ArrayList<Float> DataArray(ArrayList<String[]> csvData) {
-        ArrayList<Float> dataValsN = new ArrayList<>();
-
-        for (int i = 7; i < csvData.size(); i++) {
-            float x = Float.parseFloat(csvData.get(i)[1]);
-            float y = Float.parseFloat(csvData.get(i)[2]);
-            float z = Float.parseFloat(csvData.get(i)[3]);
-            float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
-            dataValsN.add(norma);
-        }
-        return dataValsN;
-    }
-
     @Override
     public void onSerialIoError(Exception e) {
         status("connection lost: " + e.getMessage());
