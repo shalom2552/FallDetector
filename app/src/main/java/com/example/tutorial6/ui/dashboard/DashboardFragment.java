@@ -233,7 +233,7 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
             public void onClick(View view) {
                 String msg = "Hi!";
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    SendSMS(msg);
+                    NavigationActivity.SendSMS(service, msg);
                 } else {
                     toast("Failed! SDK Version!");
                 }
@@ -250,47 +250,6 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.S)
-    @SuppressLint("UnlocalizedSms")
-    private void SendSMS(String msg) {
-
-        try {
-//            // Create the Google Maps link
-//            String googleMapsLink = "https://www.google.com/maps?q=" + "latitude" + "," + "longitude"; // todo
-//            // Create the message body with the Google Maps link
-//            String messageBody = "Click here to view the location: " + googleMapsLink;
-
-            String fileName = "contacts.csv";
-            String path = "/sdcard/csv_dir/contacts/" + fileName;
-            ArrayList<String[]> csvData = CsvRead(path);
-            String contactName = "";
-            String contactNumber = "";
-
-            for (int i = 0; i < csvData.size(); i++) { // todo change if you want more then one contacts
-                String[] line = csvData.get(i);
-                contactName = line[0];
-                contactNumber = line[1];
-                break;
-            }
-
-            //Getting intent and PendingIntent instance
-            Intent intent = new Intent(service.getApplicationContext(), DashboardFragment.class);
-            @SuppressLint("UnspecifiedImmutableFlag")
-            PendingIntent pi = PendingIntent.getActivity(service.getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE);
-
-            System.out.println("0" + contactNumber); // todo
-            //Get the SmsManager instance and call the sendTextMessage method to send message
-            SmsManager sms = SmsManager.getDefault();
-            sms.sendTextMessage(contactNumber, null, msg + "" + contactName, pi, null);
-//            sms.sendTextMessage("0587708484", null, msg, pi, null);
-
-            toast("SMS Sent successfully!");
-
-        } catch (Exception e){
-            e.printStackTrace();
-            toast("Failed sending SMS!");
-        }
-    }
 
 
     private void toast(String msg) {
@@ -303,24 +262,6 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
         estimatedNumberOfSteps = 0;
         textview_number_steps.setText(estimatedNumberOfSteps.toString());
     }
-
-    private ArrayList<String[]> CsvRead(String path) {
-        ArrayList<String[]> CsvData = new ArrayList<>();
-        try {
-            File file = new File(path);
-            CSVReader reader = new CSVReader(new FileReader(file));
-            String[] nextline;
-            while ((nextline = reader.readNext()) != null) {
-                if (nextline != null) {
-                    CsvData.add(nextline);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return CsvData;
-    }
-
 
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {

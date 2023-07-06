@@ -1,9 +1,17 @@
 package com.example.tutorial6;
 
+import android.annotation.SuppressLint;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.telephony.SmsManager;
+import android.widget.Toast;
 
+import com.example.tutorial6.ui.dashboard.DashboardFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -11,6 +19,11 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.tutorial6.databinding.ActivityNavigationBinding;
+import com.opencsv.CSVReader;
+
+import java.io.File;
+import java.io.FileReader;
+import java.util.ArrayList;
 
 public class NavigationActivity extends AppCompatActivity {
 
@@ -32,6 +45,71 @@ public class NavigationActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_navigation);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.S)
+    @SuppressLint("UnlocalizedSms")
+    public static void SendSMS(SerialService service, String msg) {
+
+        try {
+//            // Create the Google Maps link
+//            String googleMapsLink = "https://www.google.com/maps?q=" + "latitude" + "," + "longitude"; // todo
+//            // Create the message body with the Google Maps link
+//            String messageBody = "Click here to view the location: " + googleMapsLink;
+
+            String fileName = "contacts.csv";
+            String path = "/sdcard/csv_dir/contacts/" + fileName;
+            ArrayList<String[]> csvData = CsvRead(path);
+            String contactName = "";
+            String contactNumber = "";
+
+            for (int i = 0; i < csvData.size(); i++) { // todo change if you want more then one contacts
+                String[] line = csvData.get(i);
+                contactName = line[0];
+                contactNumber = line[1];
+                break;
+            }
+
+            //Getting intent and PendingIntent instance
+            Intent intent = new Intent(service.getApplicationContext(), DashboardFragment.class);
+            @SuppressLint("UnspecifiedImmutableFlag")
+            PendingIntent pi = PendingIntent.getActivity(service.getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE);
+
+            System.out.println("0" + contactNumber); // todo
+            //Get the SmsManager instance and call the sendTextMessage method to send message
+            SmsManager sms = SmsManager.getDefault();
+            sms.sendTextMessage(contactNumber, null, msg + "" + contactName, pi, null);
+//            sms.sendTextMessage("0587708484", null, msg, pi, null);
+
+//            todo
+//            toast("SMS Sent successfully!");
+            System.out.println("SMS Sent successfully!");
+
+        } catch (Exception e){
+            e.printStackTrace();
+//            todo
+//            toast("Failed sending SMS!");
+            System.out.println("Failed sending SMS!");
+        }
+    }
+
+
+    public static ArrayList<String[]> CsvRead(String path) {
+        ArrayList<String[]> CsvData = new ArrayList<>();
+        try {
+            File file = new File(path);
+            CSVReader reader = new CSVReader(new FileReader(file));
+            String[] nextline;
+            while ((nextline = reader.readNext()) != null) {
+                if (nextline != null) {
+                    CsvData.add(nextline);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return CsvData;
     }
 
 }
