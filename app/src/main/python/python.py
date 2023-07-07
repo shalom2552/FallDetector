@@ -15,14 +15,15 @@ def count_peaks(y, threshold=0):
     return peak_count
 
 
-def main(data):
+def main(data, threshold):
     records = []
     if data.size() == 0:
         return 0
     for i in range(data.size()):
         records.append(data.get(i))
 
-    return count_peaks(records, 8.9)
+    return count_peaks(records, threshold)
+
 
 
 # 107

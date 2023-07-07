@@ -47,15 +47,6 @@ public class DevicesFragment extends ListFragment {
                 return view;
             }
         };
-
-        String DEVICE_ADDRESS = "94:B5:55:34:0F:32";
-//        String DEVICE_ADDRESS = "YAS2";
-        Bundle bundle = new Bundle();
-        bundle.putString("device", DEVICE_ADDRESS);
-        Intent intent = new Intent(getActivity(), NavigationActivity.class);
-        intent.putExtra("device", bundle);
-        startActivity(intent);
-
     }
 
     @Override
@@ -117,13 +108,9 @@ public class DevicesFragment extends ListFragment {
         BluetoothDevice device = listItems.get(position-1);
         Bundle args = new Bundle();
         args.putString("device", device.getAddress());
-        System.out.println("DDDD "+ device.getAddress());
-        Intent intent = new Intent(getActivity(), NavigationActivity.class);
-        intent.putExtra("device", args);
-        startActivity(intent);
-//        Fragment fragment = new TerminalFragment();
-//        fragment.setArguments(args);
-//        getFragmentManager().beginTransaction().replace(R.id.fragment, fragment, "terminal").addToBackStack(null).commit();
+        Fragment fragment = new TerminalFragment();
+        fragment.setArguments(args);
+        getFragmentManager().beginTransaction().replace(R.id.fragment, fragment, "terminal").addToBackStack(null).commit();
     }
 
     /**

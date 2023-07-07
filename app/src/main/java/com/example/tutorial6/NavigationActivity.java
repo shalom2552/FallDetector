@@ -2,6 +2,7 @@ package com.example.tutorial6;
 
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -45,6 +46,9 @@ public class NavigationActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_navigation);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+
+
     }
 
 
@@ -61,8 +65,8 @@ public class NavigationActivity extends AppCompatActivity {
             String fileName = "contacts.csv";
             String path = "/sdcard/csv_dir/contacts/" + fileName;
             ArrayList<String[]> csvData = CsvRead(path);
-            String contactName = "";
-            String contactNumber = "";
+            String contactName = null;
+            String contactNumber = null;
 
             for (int i = 0; i < csvData.size(); i++) { // todo change if you want more then one contacts
                 String[] line = csvData.get(i);
@@ -76,21 +80,14 @@ public class NavigationActivity extends AppCompatActivity {
             @SuppressLint("UnspecifiedImmutableFlag")
             PendingIntent pi = PendingIntent.getActivity(service.getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE);
 
-            System.out.println("0" + contactNumber); // todo
             //Get the SmsManager instance and call the sendTextMessage method to send message
             SmsManager sms = SmsManager.getDefault();
             sms.sendTextMessage(contactNumber, null, msg + "" + contactName, pi, null);
-//            sms.sendTextMessage("0587708484", null, msg, pi, null);
-
-//            todo
-//            toast("SMS Sent successfully!");
-            System.out.println("SMS Sent successfully!");
+            toast(service.getApplicationContext(), "SMS Sent successfully!");
 
         } catch (Exception e){
             e.printStackTrace();
-//            todo
-//            toast("Failed sending SMS!");
-            System.out.println("Failed sending SMS!");
+            toast(service.getApplicationContext(), "Failed sending SMS!");
         }
     }
 
@@ -112,4 +109,7 @@ public class NavigationActivity extends AppCompatActivity {
         return CsvData;
     }
 
+    private static void toast(Context context, String msg) {
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
+    }
 }

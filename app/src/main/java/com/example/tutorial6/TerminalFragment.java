@@ -1,5 +1,6 @@
 package com.example.tutorial6;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -12,7 +13,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.telephony.SmsManager;
@@ -31,21 +37,30 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
+import com.github.mikephil.charting.data.Entry;
+import com.opencsv.CSVWriter;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Objects;
 
 
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
 
-    public enum Connected {False, Pending, True}
+    private enum Connected {False, Pending, True}
 
     private String deviceAddress;
     private SerialService service;
@@ -61,12 +76,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     ArrayList<Float> received_chunk_values = new ArrayList<>();
     Integer estimatedNumberOfSteps = 0;
 
-    TextView textview_number_steps;
-    TextView textView_bt_status;
-
     Boolean firstChunk = Boolean.TRUE;
     Float lastTime;
     Float currentTime;
+
+    TextView textview_number_steps;
+    TextView textView_bt_status;
+
     Float start_time;
     Boolean first = Boolean.TRUE;
     Boolean start = true;
@@ -170,8 +186,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
         Button start_btn = view.findViewById(R.id.btn_start);
         Button clear_steps_btn = view.findViewById(R.id.btn_clear_steps);
+        Button set_contact_btn = view.findViewById(R.id.btn_set_contact);
 
-        textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps); // TODO
+        textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps);
         textView_bt_status = view.findViewById(R.id.textview_connected_status);
 
 
@@ -185,7 +202,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     start = false;
                 } else {
                     recording = Boolean.FALSE;
-                    PyObject obj = pyobj.callAttr("main", received_chunk_values);
+                    PyObject obj = pyobj.callAttr("main", received_chunk_values, 8.9);
                     int numberSteps = obj.toInt();
                     estimatedNumberOfSteps += numberSteps;
                     textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
@@ -216,34 +233,30 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
         });
 
+//        set_contact_btn.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Intent intent = new Intent(getContext(), ContactActivity.class);
+//                startActivity(intent);
+//            }
+//        });
+
 
         return view;
     }
 
     private void SendSMS(String msg){
-
-        // Create the Google Maps link
-        String googleMapsLink = "https://www.google.com/maps?q=" + "latitude" + "," + "longitude"; // todo
-
-        // Create the message body with the Google Maps link
-        String messageBody = "Click here to view the location: " + googleMapsLink;
-
-
-        //Getting intent and PendingIntent instance
-        Intent intent=new Intent(service.getApplicationContext(),TerminalFragment.class);
-        PendingIntent pi=PendingIntent.getActivity(service.getApplicationContext(), 0, intent,0);
-
-        //Get the SmsManager instance and call the sendTextMessage method to send message
-        SmsManager sms=SmsManager.getDefault();
-        sms.sendTextMessage("0587708484", null, msg, pi,null);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            NavigationActivity.SendSMS(service, msg);
+        } else {
+            toast("Failed! SDK Version!");
+        }
     }
 
 
     private void toast(String msg) {
-        Toast toast = Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT);
-        TextView vv = (TextView) toast.getView().findViewById(android.R.id.message);
-        vv.setTextColor(Color.BLACK);
-        toast.show();
+        Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
+
     }
 
 
@@ -384,7 +397,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
                     if (currentTime - lastTime > 3.0) {
                         // send it to python
-                        PyObject obj = pyobj.callAttr("main", received_chunk_values);
+                        PyObject obj = pyobj.callAttr("main", received_chunk_values, 8.9);
                         int numberSteps = obj.toInt();
                         estimatedNumberOfSteps += numberSteps;
                         textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
@@ -437,10 +450,65 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
+    private ArrayList<Float> DataArray(ArrayList<String[]> csvData) {
+        ArrayList<Float> dataValsN = new ArrayList<>();
+
+        for (int i = 7; i < csvData.size(); i++) {
+            float x = Float.parseFloat(csvData.get(i)[1]);
+            float y = Float.parseFloat(csvData.get(i)[2]);
+            float z = Float.parseFloat(csvData.get(i)[3]);
+            float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+            dataValsN.add(norma);
+        }
+        return dataValsN;
+    }
+
+    private void setUpCsv(String path, String file_name, String num_steps, String state) {
+        try {
+            file_name = file_name + ".csv";
+
+            File file = new File(path);
+            file.mkdirs();
+            String csv = path + file_name;
+            CSVWriter csvWriter = new CSVWriter(new FileWriter(csv, true));
+
+            @SuppressLint("SimpleDateFormat") DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            Date date = new Date();
+            csvWriter.writeNext(new String[]{"NAME:", file_name, "", ""});
+            csvWriter.writeNext(new String[]{"EXPERIMENT TIME:", dateFormat.format(date), "", ""});
+            csvWriter.writeNext(new String[]{"ACTIVITY TYPE:", state, "", ""});
+            csvWriter.writeNext(new String[]{"COUNT OF ACTUAL STEPS:", num_steps, "", ""});
+            csvWriter.writeNext(new String[]{"ESTIMATED NUMBER OF STEPS:", Integer.toString(estimatedNumberOfSteps), "", ""});
+            csvWriter.writeNext(new String[]{});
+            csvWriter.writeNext(new String[]{"Time [sec]", "ACC X", "ACC Y", "ACC Z"});
+
+            String[] strings;
+            for (int i = 0; i < received_values.size(); i++) {
+                strings = received_values.get(i);
+                csvWriter.writeNext(strings);
+            }
+
+            csvWriter.close();
+        } catch (IOException e) {
+            Toast.makeText(getActivity(), "ERROR", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void onSerialIoError(Exception e) {
         status("connection lost: " + e.getMessage());
         disconnect();
+    }
+
+    private ArrayList<Entry> emptyDataValues() {
+        ArrayList<Entry> dataVals = new ArrayList<Entry>();
+        return dataVals;
+    }
+
+    private void OpenLoadCSV() {
+        Intent intent = new Intent(getContext(), LoadCSV.class);
+        startActivity(intent);
     }
 
     public static float roundFloat(float value) {
@@ -448,6 +516,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         String roundedValueString = decimalFormat.format(value);
         return Float.parseFloat(roundedValueString);
     }
+
 
     //The BroadcastReceiver that listens for bluetooth broadcasts
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {

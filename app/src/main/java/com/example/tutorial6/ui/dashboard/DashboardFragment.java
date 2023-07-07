@@ -90,6 +90,8 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
     Boolean start = true;
     PyObject pyobj;
 
+    boolean fallDetected = false;
+
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -107,23 +109,26 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         Objects.requireNonNull(getActivity()).registerReceiver(mReceiver, filter);
 
-//        //        String DEVICE_ADDRESS = "94:B5:55:34:0F:32";
+        //        String DEVICE_ADDRESS = "94:B5:55:34:0F:32";
 //        String DEVICE_ADDRESS = "YAS2";
 //        Bundle bundle = new Bundle();
 //        bundle.putString("device", DEVICE_ADDRESS);
 //        Intent intent = new Intent(getActivity(), NavigationActivity.class);
 //        intent.putExtra("device", bundle);
 //        startActivity(intent);
+
+        deviceAddress = "94:B5:55:34:0F:32";
+        connect();
     }
 
 
-    @Override
-    public void onDestroy() {
-        if (connected != DashboardFragment.Connected.False)
-            disconnect();
-        getActivity().stopService(new Intent(getActivity(), SerialService.class));
-        super.onDestroy();
-    }
+//    @Override
+//    public void onDestroy() {
+//        if (connected != DashboardFragment.Connected.False)
+//            disconnect();
+//        getActivity().stopService(new Intent(getActivity(), SerialService.class));
+//        super.onDestroy();
+//    }
 
     @Override
     public void onStart() {
@@ -209,7 +214,7 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
                     start = false;
                 } else {
                     recording = Boolean.FALSE;
-                    PyObject obj = pyobj.callAttr("main", received_chunk_values);
+                    PyObject obj = pyobj.callAttr("main", received_chunk_values, 8.9);
                     int numberSteps = obj.toInt();
                     estimatedNumberOfSteps += numberSteps;
                     textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
@@ -240,6 +245,8 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
             }
         });
 
+
+
         return binding.getRoot();
     }
 
@@ -261,38 +268,6 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
         received_chunk_values = new ArrayList<>();
         estimatedNumberOfSteps = 0;
         textview_number_steps.setText(estimatedNumberOfSteps.toString());
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.menu_terminal, menu);
-        menu.findItem(R.id.hex).setChecked(hexEnabled);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.clear) {
-            return true;
-        } else if (id == R.id.newline) {
-            String[] newlineNames = getResources().getStringArray(R.array.newline_names);
-            String[] newlineValues = getResources().getStringArray(R.array.newline_values);
-            int pos = java.util.Arrays.asList(newlineValues).indexOf(newline);
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle("Newline");
-            builder.setSingleChoiceItems(newlineNames, pos, (dialog, item1) -> {
-                newline = newlineValues[item1];
-                dialog.dismiss();
-            });
-            builder.create().show();
-            return true;
-        } else if (id == R.id.hex) {
-            hexEnabled = !hexEnabled;
-            item.setChecked(hexEnabled);
-            return true;
-        } else {
-            return super.onOptionsItemSelected(item);
-        }
     }
 
     /*
@@ -393,8 +368,16 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
 
                     if (currentTime - lastTime > 3.0) {
                         // send it to python
-                        PyObject obj = pyobj.callAttr("main", received_chunk_values);
+                        PyObject obj = pyobj.callAttr("main", received_chunk_values, 8.9);
                         int numberSteps = obj.toInt();
+                        PyObject obj2 = pyobj.callAttr("main", received_chunk_values, 15);
+                        int numberPeaks = obj2.toInt();
+
+                        if (numberPeaks > 1){
+                            fallDetected = true;
+                            fallDetectedAction();  // todo define action
+                        }
+
                         estimatedNumberOfSteps += numberSteps;
                         textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
                         // clear chunk list
@@ -412,6 +395,9 @@ public class DashboardFragment extends Fragment implements ServiceConnection, Se
                 pendingNewline = msg.charAt(msg.length() - 1) == '\r';
             }
         }
+    }
+
+    private void fallDetectedAction() {  // todo implement
     }
 
     private void status(String str) {
