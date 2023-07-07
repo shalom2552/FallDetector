@@ -55,6 +55,13 @@
             android:textSize="24sp"
             tools:textAlignment="center" />
 
+        <Button
+            android:id="@+id/btn_reconnect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Reconnect" />
+
     </LinearLayout>
 
     <LinearLayout

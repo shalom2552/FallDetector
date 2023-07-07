@@ -87,6 +87,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     Boolean first = Boolean.TRUE;
     Boolean start = true;
     PyObject pyobj;
+    Button reconnect_btn;
 
     /*
      * Lifecycle
@@ -187,6 +188,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         Button start_btn = view.findViewById(R.id.btn_start);
         Button clear_steps_btn = view.findViewById(R.id.btn_clear_steps);
         Button set_contact_btn = view.findViewById(R.id.btn_set_contact);
+        reconnect_btn = view.findViewById(R.id.btn_reconnect);
 
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps);
         textView_bt_status = view.findViewById(R.id.textview_connected_status);
@@ -240,6 +242,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 //                startActivity(intent);
 //            }
 //        });
+
+        reconnect_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Objects.requireNonNull(getActivity()).onBackPressed();
+            }
+        });
 
 
         return view;
@@ -532,6 +541,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 try {
                     toast("Device " + device.getName() + " Connected!");
                     textView_bt_status.setText("Device Connected!");
+                    reconnect_btn.setVisibility(View.VISIBLE);
+                    reconnect_btn.setClickable(false);
                 } catch (Exception e) {
                 }
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
