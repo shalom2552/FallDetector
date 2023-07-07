@@ -43,6 +43,7 @@ import androidx.fragment.app.Fragment;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
+import com.example.tutorial6.ui.login.ContactActivity;
 import com.github.mikephil.charting.data.Entry;
 import com.opencsv.CSVWriter;
 
@@ -240,13 +241,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
         });
 
-//        set_contact_btn.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Intent intent = new Intent(getContext(), ContactActivity.class);
-//                startActivity(intent);
-//            }
-//        });
+        set_contact_btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getContext(), ContactActivity.class);
+                startActivity(intent);
+            }
+        });
 
         reconnect_btn.setOnClickListener(new View.OnClickListener() {
             @Override
