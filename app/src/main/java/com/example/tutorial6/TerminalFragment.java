@@ -32,6 +32,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -89,6 +90,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     Boolean start = true;
     PyObject pyobj;
     Button reconnect_btn;
+    ProgressBar progressBar;
 
     /*
      * Lifecycle
@@ -195,6 +197,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         Button clear_steps_btn = view.findViewById(R.id.btn_clear_steps);
         Button set_contact_btn = view.findViewById(R.id.btn_set_contact);
         reconnect_btn = view.findViewById(R.id.btn_reconnect);
+        progressBar = view.findViewById(R.id.progressBar);
 
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps);
         textView_bt_status = view.findViewById(R.id.textview_connected_status);
@@ -253,6 +256,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             @Override
             public void onClick(View view) {
                 Objects.requireNonNull(getActivity()).onBackPressed();
+                progressBar.setVisibility(View.VISIBLE);
             }
         });
 
@@ -344,32 +348,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         service.disconnect();
     }
 
-    private void send(String str) {
-        if (connected != Connected.True) {
-            Toast.makeText(getActivity(), "not connected", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        try {
-            String msg;
-            byte[] data;
-            if (hexEnabled) {
-                StringBuilder sb = new StringBuilder();
-                TextUtil.toHexString(sb, TextUtil.fromHexString(str));
-                TextUtil.toHexString(sb, newline.getBytes());
-                msg = sb.toString();
-                data = TextUtil.fromHexString(msg);
-            } else {
-                msg = str;
-                data = (str + newline).getBytes();
-            }
-            SpannableStringBuilder spn = new SpannableStringBuilder(msg + '\n');
-            spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorSendText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            service.write(data);
-        } catch (Exception e) {
-            onSerialIoError(e);
-        }
-    }
-
     private void receive(byte[] message) {
         if (hexEnabled) {
         } else {
@@ -409,11 +387,20 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     }
                     currentTime = floatTime;
 
-
-                    if (currentTime - lastTime > 3.0) {
+                    double timeStamp = 3;
+                    if (currentTime - lastTime > timeStamp) {
                         // send it to python
-                        PyObject obj = pyobj.callAttr("main", received_chunk_values, 8.9);
+                        double stepsThreshold = 8.9;
+                        PyObject obj = pyobj.callAttr("main", received_chunk_values, stepsThreshold);
                         int numberSteps = obj.toInt();
+                        double fallThreshold = 12.0;
+                        PyObject obj2 = pyobj.callAttr("main", received_chunk_values, fallThreshold);
+                        int numberPeaks = obj2.toInt();
+                        if (numberPeaks > 1){
+                            // fall detected
+                            System.out.println("FFFFFFFFAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLL!!!!");  // what todo
+                        }
+
                         estimatedNumberOfSteps += numberSteps;
                         textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
                         // clear chunk list
@@ -546,9 +533,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)) {
                 try {
                     toast("Device " + device.getName() + " Connected!");
-                    textView_bt_status.setText("Device Connected!");
-                    reconnect_btn.setVisibility(View.VISIBLE);
+                    textView_bt_status.setText("Connected!");
+                    reconnect_btn.setVisibility(View.INVISIBLE);
                     reconnect_btn.setClickable(false);
+                    progressBar.setVisibility(View.INVISIBLE);
                 } catch (Exception e) {
                 }
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
@@ -556,7 +544,15 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED.equals(action)) {
 //           ... //Device is about to disconnect
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-//           ... //Device has disconnected
+                try {
+                    toast("Device Disconnected!");
+                } catch (Exception e){
+                    e.printStackTrace();
+                    System.out.println("Error!! Cant Toast!!");
+                }
+                textView_bt_status.setText("Disconnected!");
+                reconnect_btn.setVisibility(View.VISIBLE);
+                reconnect_btn.setClickable(true);
             }
 
         }
