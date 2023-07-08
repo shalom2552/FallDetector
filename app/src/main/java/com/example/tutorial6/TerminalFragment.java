@@ -1,5 +1,7 @@
 package com.example.tutorial6;
 
+import static com.example.tutorial6.NavigationActivity.CsvRead;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.ActionBar;
@@ -93,6 +95,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     Button reconnect_btn;
     ProgressBar progressBar;
 
+    public String EmergencyAlert = "\nEmergency Alert: \nThis message is to inform you that immediate assistance is required. \nThe fall detection feature on the app has been triggered, indicating a potential emergency situation. Please act promptly to provide the necessary aid. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you.";
+    public String FallDetected = "\nFall Detected Alert: \nWe regret to inform you that a fall has been detected. \nThe app's fall detection feature has been triggered, indicating a potential injury or distress. Please reach out to the individual as soon as possible to ensure their well-being. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you for your swift action.";
+    public String StatusUpdate = "\nStatus Update: \nThis message is to inform you that the individual has indicated that they are well and have not experienced a fall. \nPlease continue to monitor their condition and provide any necessary support. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you for your attention and care.";
+    private TextView textViewContactName;
+
     /*
      * Lifecycle
      */
@@ -134,17 +141,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             getActivity().startService(new Intent(getActivity(), SerialService.class)); // prevents service destroy on unbind from recreated activity caused by orientation change
     }
 
-    @Override
-    public void onStop() {
-        if (service != null && !getActivity().isChangingConfigurations())
-            try {
-                service.detach();
-            } catch (Exception e){
-                System.out.println("Error!");
-                e.printStackTrace();
-            }
-        super.onStop();
-    }
+//    @Override
+//    public void onStop() {
+//        if (service != null && !getActivity().isChangingConfigurations())
+//            try {
+//                service.detach();
+//            } catch (Exception e){
+//                System.out.println("Error!");
+//                e.printStackTrace();
+//            }
+//        super.onStop();
+//    }
 
     @SuppressWarnings("deprecation")
     // onAttach(context) was added with API 23. onAttach(activity) works for all API versions
@@ -169,6 +176,25 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         if (initialStart && service != null) {
             initialStart = false;
             getActivity().runOnUiThread(this::connect);
+        }
+
+        String fileName = "contacts.csv";
+        String path = "/sdcard/csv_dir/contacts/" + fileName;
+        ArrayList<String[]> csvData = CsvRead(path);
+        String contactName = null;
+        String contactNumber = null;
+
+        for (int i = 0; i < csvData.size(); i++) {
+            String[] line = csvData.get(i);
+            contactName = line[0];
+            contactNumber = line[1];
+            break;
+        }
+
+        if (contactName != null || contactNumber != null) {
+            textViewContactName.setText(contactName);
+        } else {
+            textViewContactName.setText("Empty");
         }
     }
 
@@ -239,9 +265,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         btnSendSMS.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String msg = "Hi!";
+                String msg = EmergencyAlert;
                 SendSMS(msg);
-                toast("SMS Sent successfully!");
             }
         });
 
@@ -261,6 +286,26 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
         });
 
+
+        String fileName = "contacts.csv";
+        String path = "/sdcard/csv_dir/contacts/" + fileName;
+        ArrayList<String[]> csvData = CsvRead(path);
+        String contactName = null;
+        String contactNumber = null;
+
+        for (int i = 0; i < csvData.size(); i++) {
+            String[] line = csvData.get(i);
+            contactName = line[0];
+            contactNumber = line[1];
+            break;
+        }
+
+        textViewContactName = view.findViewById(R.id.textViewContactName);
+        if (contactName != null || contactNumber != null) {
+            textViewContactName.setText(contactName);
+        } else {
+            textViewContactName.setText("Empty");
+        }
 
         return view;
     }
@@ -399,7 +444,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         int numberPeaks = obj2.toInt();
                         if (numberPeaks > 1){
                             // fall detected
-                            System.out.println("FFFFFFFFAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLL!!!!");  // what todo
+                            FallHandler();
                         }
 
                         estimatedNumberOfSteps += numberSteps;
@@ -421,7 +466,20 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
-    private void status(String str) {
+    private void FallHandler() {
+        System.out.println("FFFFFFFFAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLL!!!!");  // what todo
+        String msg = FallDetected;
+        SendSMS(FallDetected);
+
+    }
+
+    private void StatusUpdate() {
+        String msg = StatusUpdate;
+        SendSMS(StatusUpdate);
+    }
+
+
+        private void status(String str) {
         SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
         spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
@@ -466,37 +524,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         return dataValsN;
     }
 
-    private void setUpCsv(String path, String file_name, String num_steps, String state) {
-        try {
-            file_name = file_name + ".csv";
-
-            File file = new File(path);
-            file.mkdirs();
-            String csv = path + file_name;
-            CSVWriter csvWriter = new CSVWriter(new FileWriter(csv, true));
-
-            @SuppressLint("SimpleDateFormat") DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-            Date date = new Date();
-            csvWriter.writeNext(new String[]{"NAME:", file_name, "", ""});
-            csvWriter.writeNext(new String[]{"EXPERIMENT TIME:", dateFormat.format(date), "", ""});
-            csvWriter.writeNext(new String[]{"ACTIVITY TYPE:", state, "", ""});
-            csvWriter.writeNext(new String[]{"COUNT OF ACTUAL STEPS:", num_steps, "", ""});
-            csvWriter.writeNext(new String[]{"ESTIMATED NUMBER OF STEPS:", Integer.toString(estimatedNumberOfSteps), "", ""});
-            csvWriter.writeNext(new String[]{});
-            csvWriter.writeNext(new String[]{"Time [sec]", "ACC X", "ACC Y", "ACC Z"});
-
-            String[] strings;
-            for (int i = 0; i < received_values.size(); i++) {
-                strings = received_values.get(i);
-                csvWriter.writeNext(strings);
-            }
-
-            csvWriter.close();
-        } catch (IOException e) {
-            Toast.makeText(getActivity(), "ERROR", Toast.LENGTH_LONG).show();
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public void onSerialIoError(Exception e) {
@@ -504,15 +531,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         disconnect();
     }
 
-    private ArrayList<Entry> emptyDataValues() {
-        ArrayList<Entry> dataVals = new ArrayList<Entry>();
-        return dataVals;
-    }
-
-    private void OpenLoadCSV() {
-        Intent intent = new Intent(getContext(), LoadCSV.class);
-        startActivity(intent);
-    }
 
     public static float roundFloat(float value) {
         DecimalFormat decimalFormat = new DecimalFormat("#.###");

@@ -4,19 +4,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="#FAE8CD"
     >
 
 
     <pl.droidsonroids.gif.GifImageView
         android:id="@+id/gifImageView"
-        android:layout_width="117dp"
-        android:layout_height="112dp"
+        android:layout_width="274dp"
+        android:layout_height="189dp"
         android:layout_marginStart="32dp"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="32dp"
 
-        android:src="@drawable/hello"
+        android:src="@drawable/logo"
         app:layout_constraintBottom_toTopOf="@+id/btn_home_start"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -30,9 +30,9 @@
         android:layout_marginTop="32dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
-        android:text="Welcome"
-        android:textColor="@color/black"
-        android:textSize="34sp"
+        android:text="Fall Detector"
+        android:textColor="@color/color2"
+        android:textSize="44sp"
         app:layout_constraintBottom_toTopOf="@+id/gifImageView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.506"
@@ -41,10 +41,11 @@
 
     <Button
         android:id="@+id/btn_home_start"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="353dp"
+        android:layout_height="62dp"
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp"
+        android:backgroundTint="@color/color2"
         android:text="Start"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

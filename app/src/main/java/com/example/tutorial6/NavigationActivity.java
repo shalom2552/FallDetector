@@ -22,6 +22,8 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.tutorial6.databinding.ActivityNavigationBinding;
 import com.opencsv.CSVReader;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
@@ -75,20 +77,35 @@ public class NavigationActivity extends AppCompatActivity {
                 break;
             }
 
-            //Getting intent and PendingIntent instance
-            Intent intent = new Intent(service.getApplicationContext(), DashboardFragment.class);
-            @SuppressLint("UnspecifiedImmutableFlag")
-            PendingIntent pi = PendingIntent.getActivity(service.getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE);
+
+            msg = "Hi " + contactName + "\n" + msg;
+            ArrayList<String> parts = splitStringByLength(msg, 40);
 
             //Get the SmsManager instance and call the sendTextMessage method to send message
             SmsManager sms = SmsManager.getDefault();
-            sms.sendTextMessage(contactNumber, null, msg + "" + contactName, pi, null);
+            sms.sendMultipartTextMessage(contactNumber, null, parts, null, null);
+//            sms.sendTextMessage(contactNumber, null, "12345678901234567890123456789012345678901234567890", null, null);
             toast(service.getApplicationContext(), "SMS Sent successfully!");
 
         } catch (Exception e){
             e.printStackTrace();
             toast(service.getApplicationContext(), "Failed sending SMS!");
         }
+    }
+
+    public static ArrayList<String> splitStringByLength(String text, int length) {
+        ArrayList<String> parts = new ArrayList<>();
+        int textLength = text.length();
+        int startIndex = 0;
+
+        while (startIndex < textLength) {
+            int endIndex = Math.min(startIndex + length, textLength);
+            String part = text.substring(startIndex, endIndex);
+            parts.add(part);
+            startIndex += length;
+        }
+
+        return parts;
     }
 
 

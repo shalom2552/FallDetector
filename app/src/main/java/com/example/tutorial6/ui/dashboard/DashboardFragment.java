@@ -49,7 +49,6 @@ import com.example.tutorial6.SerialService;
 import com.example.tutorial6.SerialSocket;
 import com.example.tutorial6.TextUtil;
 import com.example.tutorial6.databinding.FragmentDashboardBinding;
-import com.example.tutorial6.ui.home.HomeFragment;
 import com.opencsv.CSVReader;
 
 import java.io.File;

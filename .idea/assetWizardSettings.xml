@@ -68,6 +68,7 @@
                                           <PersistentState>
                                             <option name="values">
                                               <map>
+                                                <entry key="color" value="000000" />
                                                 <entry key="imagePath" value="C:\Users\shalo\AppData\Local\Temp\ic_android_black_24dp.xml" />
                                               </map>
                                             </option>
@@ -80,8 +81,8 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="D:\Courses\semester_8\IoT\Project\Tutorial7\app\src\main\res\drawable-mdpi\hello.png" />
-                                                <entry key="scalingPercent" value="106" />
+                                                <entry key="imagePath" value="D:\Courses\semester_8\IoT\Project\partB\gif\logo.png" />
+                                                <entry key="scalingPercent" value="88" />
                                               </map>
                                             </option>
                                           </PersistentState>

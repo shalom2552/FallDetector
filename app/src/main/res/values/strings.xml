@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FallDetector</string>
+    <string name="app_name">Falls</string>
     <string name="devices">Bluetooth Devices</string>
     <string name="title_activity_navigation">NavigationActivity</string>
     <string name="title_home">Home</string>
@@ -8,8 +8,8 @@
     <string name="title_activity_contact">ContactActivity</string>
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
+    <string name="action_sign_in">Save contact details</string>
+    <string name="action_sign_in_short">Save</string>
     <string name="welcome">"Welcome !"</string>
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Contact Number must be 10 characters</string>

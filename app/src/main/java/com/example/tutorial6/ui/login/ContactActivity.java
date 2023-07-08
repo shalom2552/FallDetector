@@ -1,16 +1,23 @@
 package com.example.tutorial6.ui.login;
 
+import static com.example.tutorial6.NavigationActivity.CsvRead;
+
+import android.annotation.SuppressLint;
 import android.app.Activity;
 
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Environment;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
@@ -24,12 +31,22 @@ import android.widget.Toast;
 
 import com.example.tutorial6.R;
 import com.example.tutorial6.databinding.ActivityContactBinding;
+import com.opencsv.CSVWriter;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 
 public class ContactActivity extends AppCompatActivity {
 
     private LoginViewModel loginViewModel;
     private ActivityContactBinding binding;
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,10 +133,38 @@ public class ContactActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 loadingProgressBar.setVisibility(View.VISIBLE);
-                loginViewModel.login(usernameEditText.getText().toString(),
-                        phoneNumberEditText.getText().toString());
+//                loginViewModel.login(usernameEditText.getText().toString(),
+//                        phoneNumberEditText.getText().toString());
+                saveToCSV(usernameEditText.getText().toString(), phoneNumberEditText.getText().toString());
+                finish();
             }
         });
+
+        String fileName = "contacts.csv";
+        String path = "/sdcard/csv_dir/contacts/" + fileName;
+        ArrayList<String[]> csvData = CsvRead(path);
+        String contactName = null;
+        String contactNumber = null;
+
+        for (int i = 0; i < csvData.size(); i++) {
+            String[] line = csvData.get(i);
+            contactName = line[0];
+            contactNumber = line[1];
+            break;
+        }
+
+        TextView textViewContactName = binding.textViewContactName;
+        TextView textViewContactNumber = binding.textViewContactNumber;
+
+        if (contactName != null || contactNumber != null) {
+            textViewContactName.setText(contactName);
+            textViewContactNumber.setText(contactNumber);
+        } else {
+            textViewContactName.setText("Empty");
+            textViewContactNumber.setText("Empty");
+        }
+
+
     }
 
     private void updateUiWithUser(LoggedInUserView model) {
@@ -131,4 +176,32 @@ public class ContactActivity extends AppCompatActivity {
     private void showLoginFailed(@StringRes Integer errorString) {
         Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
     }
+
+
+    private void saveToCSV(String name, String number) {
+        try {
+
+            @SuppressLint("SdCardPath") String path = "/sdcard/csv_dir/contacts/";
+            String file_name = "contacts";
+            file_name = file_name + ".csv";
+            String csv = path + file_name;
+
+            File file = new File(path);
+            file.mkdirs();
+            File file2 = new File(csv);
+            if (!file2.exists()) {
+                System.out.println("ASDASD");
+                file2.createNewFile();
+            }
+
+            CSVWriter csvWriter = new CSVWriter(new FileWriter(csv));
+            csvWriter.writeNext(new String[]{name, number});
+            csvWriter.close();
+            Toast.makeText(ContactActivity.this, "Contact Saved!", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Toast.makeText(this, "Not Saved!", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
 }
