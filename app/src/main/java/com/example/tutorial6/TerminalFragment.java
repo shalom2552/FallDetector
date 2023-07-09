@@ -3,6 +3,7 @@ package com.example.tutorial6;
 import static com.example.tutorial6.NavigationActivity.CsvRead;
 
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -10,30 +11,41 @@ import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.chaquo.python.PyObject;
@@ -71,6 +83,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     TextView textview_number_steps;
     TextView textView_bt_status;
+
+    ImageView gif_run;
+    ImageView gif_walk;
 
     Float start_time;
     Boolean first = Boolean.TRUE;
@@ -111,6 +126,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         Objects.requireNonNull(getActivity()).registerReceiver(mReceiver, filter);
+
 
     }
 
@@ -219,6 +235,12 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps);
         textView_bt_status = view.findViewById(R.id.textview_connected_status);
 
+        gif_run = view.findViewById(R.id.gifImageView_run);
+        gif_walk = view.findViewById(R.id.gifImageView_walk);
+
+        gif_run.setVisibility(View.INVISIBLE);
+        gif_walk.setVisibility(View.INVISIBLE);
+
 
         start_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -261,8 +283,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         btnSendSMS.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String msg = EmergencyAlert;
-                SendSMS(msg);
+                if (textViewContactName.getText() == "Empty") {
+                    toast("Please set contact first.");
+                } else {
+                    showFallDetectedDialog((float) 1.0, EmergencyAlert);
+                }
             }
         });
 
@@ -436,12 +461,15 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         double stepsThreshold = 8.9;
                         PyObject obj = pyobj.callAttr("main", received_chunk_values, stepsThreshold);
                         int numberSteps = obj.toInt();
-                        double fallThreshold = 12.0;
+                        double fallThreshold = 17.0;
+                        // check status run or walk
+                        CheckStatus(numberSteps);
+                        // check if fall
                         PyObject obj2 = pyobj.callAttr("main", received_chunk_values, fallThreshold);
                         int numberPeaks = obj2.toInt();
-                        if (numberPeaks > 1) {
+                        if (numberPeaks > 2) {
                             // fall detected
-                            FallHandler(floatTime);
+                            showFallDetectedDialog(currentTime, FallDetected);
                         }
 
                         estimatedNumberOfSteps += numberSteps;
@@ -463,19 +491,110 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
-    private void FallHandler(float detectTime) {
-        System.out.println("FFFFFFFFAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLL!!!!" + (detectTime - lastTimeFallDetected ));  // what todo
-        if (detectTime - lastTimeFallDetected > 60 || detectTime - lastTimeFallDetected < 0) {
-            SendSMS(FallDetected);
-            lastTimeFallDetected = detectTime;
-        } else if (detectTime - lastTimeFallDetected > 5) {
-            toast("Fall Detected. Not sent. multy detect.");
+    private void CheckStatus(int numberSteps) {
+        if (numberSteps > 8) {
+            gif_run.setVisibility(View.VISIBLE);
+            gif_walk.setVisibility(View.INVISIBLE);
+        } else if (numberSteps > 2){
+            gif_run.setVisibility(View.INVISIBLE);
+            gif_walk.setVisibility(View.VISIBLE);
+        } else {
+            gif_run.setVisibility(View.INVISIBLE);
+            gif_walk.setVisibility(View.INVISIBLE);
         }
     }
 
-    private void StatusUpdate() {
-        String msg = StatusUpdate;
-        SendSMS(StatusUpdate);
+    private void showFallDetectedDialog(float detectTime, String msg) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Fall Detected");
+        builder.setMessage("Are you okay?");
+        builder.setCancelable(false);
+
+        // Set positive button
+        builder.setPositiveButton("I'm Okay", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Cancel the timer and dismiss the dialog
+                cancelFallDetectedTimer();
+                dialog.dismiss();
+            }
+        });
+
+        // Set negative button
+        builder.setNegativeButton("Help!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Call the FallHandler function here
+                if (detectTime - lastTimeFallDetected > 5) {
+                    toast("Fall Detected. Not sent. multy detect.");
+                    return;
+                } else if  (detectTime - lastTimeFallDetected > 60 || detectTime - lastTimeFallDetected < 0){
+                    FallHandler(msg);
+                    dialog.dismiss();
+                    lastTimeFallDetected = detectTime;
+                }
+            }
+        });
+
+
+        // Create a TextView for the timer
+        TextView timerTextView = new TextView(getActivity());
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        layoutParams.gravity = Gravity.CENTER;
+        timerTextView.setLayoutParams(layoutParams);
+        timerTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
+        timerTextView.setTextSize(24);
+        timerTextView.setPadding(0, 16, 0, 16);
+        builder.setView(timerTextView);
+
+        // Create the dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Start the timer
+        startFallDetectedTimer(dialog, timerTextView, msg);
+    }
+
+    private static final int FALL_DETECTED_TIMER_DURATION = 30000; // 30 seconds
+    private CountDownTimer fallDetectedTimer;
+
+    private void startFallDetectedTimer(AlertDialog dialog, TextView timerTextView, String msg) {
+        fallDetectedTimer = new CountDownTimer(FALL_DETECTED_TIMER_DURATION, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                // Update the timer text
+                long secondsRemaining = millisUntilFinished / 1000;
+                String timerText = "Timer: " + secondsRemaining + " seconds";
+                timerTextView.setTextColor(Color.WHITE);
+                timerTextView.setTextSize(12);
+                timerTextView.setText(timerText);
+            }
+
+            @Override
+            public void onFinish() {
+                // Call the FallHandler function after the timer ends
+                FallHandler(msg);
+                dialog.dismiss();
+            }
+        };
+        fallDetectedTimer.start();
+    }
+
+
+    private void cancelFallDetectedTimer() {
+        if (fallDetectedTimer != null) {
+            fallDetectedTimer.cancel();
+        }
+    }
+
+
+
+    private void FallHandler(String msg) {
+            SendSMS(msg);
+            toast("Fall detected. Emergency SMS sent.");
     }
 
 

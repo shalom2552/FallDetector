@@ -85,7 +85,7 @@ public class NavigationActivity extends AppCompatActivity {
             SmsManager sms = SmsManager.getDefault();
             sms.sendMultipartTextMessage(contactNumber, null, parts, null, null);
 //            sms.sendTextMessage(contactNumber, null, "12345678901234567890123456789012345678901234567890", null, null);
-            toast(service.getApplicationContext(), "SMS Sent successfully!");
+            toast(service.getApplicationContext(), "SMS Sent to " + contactName + "- " + contactNumber);
 
         } catch (Exception e){
             e.printStackTrace();

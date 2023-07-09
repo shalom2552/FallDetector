@@ -16,4 +16,11 @@
     <string name="login_failed">"Login failed"</string>
     <string name="phone_number">Phone Number</string>
     <string name="contact_name">Contact Name</string>
+    <string name="steps_count_label">Steps Count:</string>
+    <string name="reset_button_description">Reset Step Count</string>
+    <string name="sos_button_description">SOS Button</string>
+    <string name="set_contact_button_description">Set Contact Button</string>
+    <string name="discover">Discover Independence, with Peace of Mind.</string>
+    <string name="guardian">Guardian in Your Pocket, Assistance at Your Fingertips.</string>
+    <string name="start_connect_and_monitor">Start Connect and Monitor</string>
 </resources>

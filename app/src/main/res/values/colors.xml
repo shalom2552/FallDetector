@@ -12,9 +12,10 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="color4">#A2CDB0</color>
-    <color name="color2">#3E493F</color>
+    <color name="color2">#385838</color>
     <color name="color3">#A2CDB0</color>
     <color name="color1">#BDA37A</color>
+    <color name="sos">#926C69</color>
 
     <color name="colorRecieveText">#00FF00</color>
     <color name="colorSendText">#82CAFF</color>

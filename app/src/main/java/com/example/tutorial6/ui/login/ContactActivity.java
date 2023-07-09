@@ -64,8 +64,17 @@ public class ContactActivity extends AppCompatActivity {
         final EditText usernameEditText = binding.username;
         final EditText phoneNumberEditText = binding.textviewNumber;
         final Button loginButton = binding.login;
+        final Button backButton = binding.buttonBackContact;
         final ProgressBar loadingProgressBar = binding.loading;
         ImageButton imageButton_reset_contact = binding.imageButtonResetContact;
+
+
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ContactActivity.super.onBackPressed();
+            }
+        });
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
             @Override
@@ -178,11 +187,11 @@ public class ContactActivity extends AppCompatActivity {
                 if(file.exists()) {
                     File file2 = new File(file.getAbsolutePath());
                     file2.delete();
-                    toast("File deleted.");
+                    toast("Contact removed.");
                     finish();
                 }else
                 {
-                    toast("File not exists");
+                    toast("Nothing to delete!");
                 }
             }
         });
