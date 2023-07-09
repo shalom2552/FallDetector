@@ -3,6 +3,7 @@ package com.example.tutorial6;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
@@ -20,6 +21,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 
 public class DevicesFragment extends ListFragment {
 
@@ -31,6 +33,8 @@ public class DevicesFragment extends ListFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        Objects.requireNonNull(getActivity()).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+
         if(getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH))
             bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         listAdapter = new ArrayAdapter<BluetoothDevice>(getActivity(), 0, listItems) {

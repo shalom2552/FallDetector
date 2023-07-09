@@ -2,6 +2,7 @@ package com.example.tutorial6;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
@@ -61,6 +62,10 @@ public class WelcomeActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         }
+
+
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+
     }
 
     private void StartApp(){

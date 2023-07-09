@@ -2,12 +2,9 @@ package com.example.tutorial6;
 
 import static com.example.tutorial6.NavigationActivity.CsvRead;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -16,15 +13,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
+import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.telephony.SmsManager;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.style.ForegroundColorSpan;
@@ -35,32 +27,23 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 import com.example.tutorial6.ui.login.ContactActivity;
-import com.github.mikephil.charting.data.Entry;
-import com.opencsv.CSVWriter;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Objects;
-
 
 
 public class TerminalFragment extends Fragment implements ServiceConnection, SerialListener {
@@ -83,6 +66,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     Boolean firstChunk = Boolean.TRUE;
     Float lastTime;
+    Float lastTimeFallDetected;
     Float currentTime;
 
     TextView textview_number_steps;
@@ -92,13 +76,17 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     Boolean first = Boolean.TRUE;
     Boolean start = true;
     PyObject pyobj;
-    Button reconnect_btn;
+    ImageButton reconnect_btn;
+    ImageButton set_contact_btn;
+    ImageButton clear_steps_btn;
     ProgressBar progressBar;
 
     public String EmergencyAlert = "\nEmergency Alert: \nThis message is to inform you that immediate assistance is required. \nThe fall detection feature on the app has been triggered, indicating a potential emergency situation. Please act promptly to provide the necessary aid. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you.";
     public String FallDetected = "\nFall Detected Alert: \nWe regret to inform you that a fall has been detected. \nThe app's fall detection feature has been triggered, indicating a potential injury or distress. Please reach out to the individual as soon as possible to ensure their well-being. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you for your swift action.";
     public String StatusUpdate = "\nStatus Update: \nThis message is to inform you that the individual has indicated that they are well and have not experienced a fall. \nPlease continue to monitor their condition and provide any necessary support. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you for your attention and care.";
     private TextView textViewContactName;
+
+    private boolean BTconnected = false;
 
     /*
      * Lifecycle
@@ -109,6 +97,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         setHasOptionsMenu(true);
         setRetainInstance(true);
         deviceAddress = getArguments().getString("device");
+
+        Objects.requireNonNull(getActivity()).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
 
         if (!Python.isStarted()) {
             Python.start(new AndroidPlatform(getActivity()));
@@ -221,9 +211,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         View view = inflater.inflate(R.layout.fragment_terminal, container, false);
 
         Button start_btn = view.findViewById(R.id.btn_start);
-        Button clear_steps_btn = view.findViewById(R.id.btn_clear_steps);
-        Button set_contact_btn = view.findViewById(R.id.btn_set_contact);
-        reconnect_btn = view.findViewById(R.id.btn_reconnect);
+        clear_steps_btn = view.findViewById(R.id.reset_count);
+        set_contact_btn = view.findViewById(R.id.btn_set_contact);
+        reconnect_btn = view.findViewById(R.id.imageButton);
         progressBar = view.findViewById(R.id.progressBar);
 
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps);
@@ -233,21 +223,27 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         start_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (start) {
-                    recording = Boolean.TRUE;
-                    firstChunk = Boolean.TRUE;
-                    start_btn.setText("Stop");
-                    start = false;
+                if (textViewContactName.getText() == "Empty") {
+                    toast("Please set contact first.");
+                } else if (!BTconnected) {
+                    toast("Please connect The Device first.");
                 } else {
-                    recording = Boolean.FALSE;
-                    PyObject obj = pyobj.callAttr("main", received_chunk_values, 8.9);
-                    int numberSteps = obj.toInt();
-                    estimatedNumberOfSteps += numberSteps;
-                    textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
-                    // reset chunk data
-                    received_chunk_values = new ArrayList<>();
-                    start_btn.setText("Start");
-                    start = true;
+                    if (start) {
+                        recording = Boolean.TRUE;
+                        firstChunk = Boolean.TRUE;
+                        start_btn.setText("Stop");
+                        start = false;
+                    } else {
+                        recording = Boolean.FALSE;
+                        PyObject obj = pyobj.callAttr("main", received_chunk_values, 8.9);
+                        int numberSteps = obj.toInt();
+                        estimatedNumberOfSteps += numberSteps;
+                        textview_number_steps.setText(Integer.toString(estimatedNumberOfSteps));
+                        // reset chunk data
+                        received_chunk_values = new ArrayList<>();
+                        start_btn.setText("Start");
+                        start = true;
+                    }
                 }
             }
         });
@@ -260,7 +256,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         });
 
         // todo sms func
-        Button btnSendSMS = view.findViewById(R.id.btn_send_sms);
+        ImageButton btnSendSMS = view.findViewById(R.id.btn_send_sms);
 
         btnSendSMS.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -293,7 +289,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         String contactName = null;
         String contactNumber = null;
 
-        for (int i = 0; i < csvData.size(); i++) {
+        for (
+                int i = 0; i < csvData.size(); i++) {
             String[] line = csvData.get(i);
             contactName = line[0];
             contactNumber = line[1];
@@ -310,7 +307,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         return view;
     }
 
-    private void SendSMS(String msg){
+    private void SendSMS(String msg) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             NavigationActivity.SendSMS(service, msg);
         } else {
@@ -321,7 +318,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void toast(String msg) {
         Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
-
     }
 
 
@@ -413,6 +409,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     if (first) {
                         first = Boolean.FALSE;
                         start_time = floatTime;
+                        lastTimeFallDetected = floatTime;
                     }
 
                     floatTime -= start_time;
@@ -442,9 +439,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         double fallThreshold = 12.0;
                         PyObject obj2 = pyobj.callAttr("main", received_chunk_values, fallThreshold);
                         int numberPeaks = obj2.toInt();
-                        if (numberPeaks > 1){
+                        if (numberPeaks > 1) {
                             // fall detected
-                            FallHandler();
+                            FallHandler(floatTime);
                         }
 
                         estimatedNumberOfSteps += numberSteps;
@@ -466,11 +463,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
     }
 
-    private void FallHandler() {
-        System.out.println("FFFFFFFFAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLL!!!!");  // what todo
-        String msg = FallDetected;
-        SendSMS(FallDetected);
-
+    private void FallHandler(float detectTime) {
+        System.out.println("FFFFFFFFAAAAAAAAAAAALLLLLLLLLLLLLLLLLLLLLLLLLL!!!!" + (detectTime - lastTimeFallDetected ));  // what todo
+        if (detectTime - lastTimeFallDetected > 60 || detectTime - lastTimeFallDetected < 0) {
+            SendSMS(FallDetected);
+            lastTimeFallDetected = detectTime;
+        } else if (detectTime - lastTimeFallDetected > 5) {
+            toast("Fall Detected. Not sent. multy detect.");
+        }
     }
 
     private void StatusUpdate() {
@@ -479,7 +479,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
 
-        private void status(String str) {
+    private void status(String str) {
         SpannableStringBuilder spn = new SpannableStringBuilder(str + '\n');
         spn.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.colorStatusText)), 0, spn.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
@@ -556,6 +556,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     reconnect_btn.setVisibility(View.INVISIBLE);
                     reconnect_btn.setClickable(false);
                     progressBar.setVisibility(View.INVISIBLE);
+                    BTconnected = true;
                 } catch (Exception e) {
                 }
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
@@ -565,10 +566,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
                 try {
                     toast("Device Disconnected!");
-                } catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                     System.out.println("Error!! Cant Toast!!");
                 }
+                BTconnected = false;
                 textView_bt_status.setText("Disconnected!");
                 reconnect_btn.setVisibility(View.VISIBLE);
                 reconnect_btn.setClickable(true);

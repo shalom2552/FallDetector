@@ -9,6 +9,7 @@ import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -25,6 +26,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +42,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Objects;
 
 public class ContactActivity extends AppCompatActivity {
 
@@ -50,6 +53,7 @@ public class ContactActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
 
         binding = ActivityContactBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -61,6 +65,7 @@ public class ContactActivity extends AppCompatActivity {
         final EditText phoneNumberEditText = binding.textviewNumber;
         final Button loginButton = binding.login;
         final ProgressBar loadingProgressBar = binding.loading;
+        ImageButton imageButton_reset_contact = binding.imageButtonResetContact;
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
             @Override
@@ -164,7 +169,29 @@ public class ContactActivity extends AppCompatActivity {
             textViewContactNumber.setText("Empty");
         }
 
+        imageButton_reset_contact.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String path = "/sdcard/csv_dir/contacts/";
+                String fileName = "contacts.csv";
+                File file = new File(path + fileName);
+                if(file.exists()) {
+                    File file2 = new File(file.getAbsolutePath());
+                    file2.delete();
+                    toast("File deleted.");
+                    finish();
+                }else
+                {
+                    toast("File not exists");
+                }
+            }
+        });
 
+
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     private void updateUiWithUser(LoggedInUserView model) {

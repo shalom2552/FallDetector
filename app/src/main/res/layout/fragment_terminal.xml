@@ -3,6 +3,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/btn_reconnect"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/color2"
@@ -20,17 +21,16 @@
             android:layout_height="wrap_content"
             android:text="Contact :"
             android:textAlignment="center"
-            android:textSize="28sp"
-            android:textColor="@color/white"/>
+            android:textColor="@color/white"
+            android:textSize="28sp" />
 
         <TextView
             android:id="@+id/textViewContactName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Empty"
-            android:textSize="22sp"
             android:textColor="@color/white"
-            />
+            android:textSize="22sp" />
     </LinearLayout>
 
     <LinearLayout
@@ -45,14 +45,13 @@
         tools:layout_editor_absoluteX="70dp">
 
 
-        <Button
-            android:id="@+id/btn_clear_steps"
-            android:layout_width="133dp"
-            android:layout_height="match_parent"
+        <ImageButton
+            android:id="@+id/reset_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="clear steps"
-            android:backgroundTint="@color/color1"
-            android:textColor="@color/black" />
+            app:srcCompat="@drawable/retry"
+            android:backgroundTint="@color/color1"/>
 
         <TextView
             android:id="@+id/textview_number_steps"
@@ -101,79 +100,56 @@
 
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btn_reconnect"
-            android:layout_width="63dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:backgroundTint="@color/color1"
-            android:text="Reconnect"
-            android:textColor="@color/black" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="42dp"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="184dp"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/sos" />
-
-        <ImageView
-            android:id="@+id/imageView3"
+        <ImageButton
+            android:id="@+id/imageButton"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            tools:srcCompat="@drawable/contact" />
+            app:srcCompat="@drawable/retry"
+            android:backgroundTint="@color/color1"/>
+
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/linearLayout7"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="12dp"
+        android:layout_margin="48dp"
         android:layout_marginBottom="48dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout">
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_send_sms"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:backgroundTint="@color/color1"
-            android:onClick="SendSMS"
-            android:text="Send SMS"
-            android:textColor="@color/black" />
+            app:srcCompat="@drawable/sos" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btn_set_contact"
-            android:layout_width="85dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:backgroundTint="@color/color1"
-            android:text="Set Contact"
-            android:textColor="@color/black" />
+            app:srcCompat="@drawable/contact" />
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="136dp"
+        android:layout_height="97dp"
         android:orientation="horizontal"
-        android:padding="32dp">
+        android:padding="8dp">
 
         <Button
             android:id="@+id/btn_start"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:backgroundTint="@color/color1"
-            android:textColor="@color/black"
-            android:text="start"/>
+            android:text="start"
+            android:textColor="@color/black" />
     </LinearLayout>
 
 </LinearLayout>
