@@ -46,10 +46,20 @@
             android:src="@drawable/retry" />
 
         <pl.droidsonroids.gif.GifImageView
+            android:id="@+id/imageView_tracking"
+            android:layout_width="236dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            android:src="@drawable/sound_crop"
+            app:layout_constraintBottom_toTopOf="@+id/btn_home_start"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2" />
+
+        <pl.droidsonroids.gif.GifImageView
             android:id="@+id/gifImageView"
             android:layout_width="113dp"
             android:layout_height="90dp"
-            android:layout_marginTop="16dp"
             android:layout_marginBottom="0dp"
             android:src="@drawable/walk_no_bg"
             app:layout_constraintBottom_toTopOf="@+id/btn_home_start"
@@ -59,66 +69,16 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linearLayout_steps_counter"
-        android:layout_width="wrap_content"
-        android:layout_height="80dp"
-        android:layout_gravity="center"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="24dp"
-        android:background="@drawable/round_style"
-        android:backgroundTint="@color/color1"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:paddingStart="16dp"
-                android:paddingTop="8dp"
-                android:paddingEnd="16dp"
-                android:paddingBottom="8dp">
-
-                <TextView
-                    android:id="@+id/textview_number_steps_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/steps_count_label"
-                    android:textColor="@color/black"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/textview_number_steps"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0"
-                    android:textAlignment="center"
-                    android:textColor="@color/black"
-                    android:textSize="24sp" />
-
-            </LinearLayout>
-        </LinearLayout>
-
-
-    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/linearLayout7"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="84dp"
+        android:layout_gravity="center_horizontal"
         android:layout_marginTop="4dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        tools:layout_marginTop="0dp">
 
         <ImageButton
             android:id="@+id/btn_send_sms"
@@ -132,8 +92,63 @@
             android:src="@drawable/sos" />
 
         <Space
-            android:layout_width="128dp"
-            android:layout_height="match_parent" />
+            android:layout_width="16dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:id="@+id/linearLayout_steps_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="80dp"
+            android:layout_gravity="center"
+
+            android:background="@drawable/round_style"
+            android:backgroundTint="@color/color1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:paddingStart="16dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/textview_number_steps_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/steps_count_label"
+                        android:textColor="@color/black"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/textview_number_steps"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textAlignment="center"
+                        android:textColor="@color/black"
+                        android:textSize="24sp" />
+
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
 
         <ImageButton
             android:id="@+id/btn_set_contact"

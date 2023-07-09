@@ -3,7 +3,6 @@ package com.example.tutorial6;
 import static com.example.tutorial6.NavigationActivity.CsvRead;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -17,7 +16,6 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -32,8 +30,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -41,11 +37,9 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.Toolbar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.chaquo.python.PyObject;
@@ -53,8 +47,11 @@ import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 import com.example.tutorial6.ui.login.ContactActivity;
 
+import java.sql.Time;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Objects;
 
 
@@ -78,7 +75,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     Boolean firstChunk = Boolean.TRUE;
     Float lastTime;
-    Float lastTimeFallDetected;
+    long lastTimeFallDetected;
     Float currentTime;
 
     TextView textview_number_steps;
@@ -96,6 +93,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     LinearLayout linearLayout_steps_counter;
     ProgressBar progressBar;
     ImageView gifImageView;
+    ImageView imageView_tracking;
 
     public String EmergencyAlert = "\nEmergency Alert: \nThis message is to inform you that immediate assistance is required. \nThe fall detection feature on the app has been triggered, indicating a potential emergency situation. Please act promptly to provide the necessary aid. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you.";
     public String FallDetected = "\nFall Detected Alert: \nWe regret to inform you that a fall has been detected. \nThe app's fall detection feature has been triggered, indicating a potential injury or distress. Please reach out to the individual as soon as possible to ensure their well-being. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you for your swift action.";
@@ -148,17 +146,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             getActivity().startService(new Intent(getActivity(), SerialService.class)); // prevents service destroy on unbind from recreated activity caused by orientation change
     }
 
-//    @Override
-//    public void onStop() {
-//        if (service != null && !getActivity().isChangingConfigurations())
-//            try {
-//                service.detach();
-//            } catch (Exception e){
-//                System.out.println("Error!");
-//                e.printStackTrace();
-//            }
-//        super.onStop();
-//    }
 
     @SuppressWarnings("deprecation")
     // onAttach(context) was added with API 23. onAttach(activity) works for all API versions
@@ -234,16 +221,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         reconnect_btn = view.findViewById(R.id.imageButton);
         progressBar = view.findViewById(R.id.progressBar);
         gifImageView = view.findViewById(R.id.gifImageView);
+        imageView_tracking = view.findViewById(R.id.imageView_tracking);
 
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps);
         textView_bt_status = view.findViewById(R.id.textview_connected_status);
 //        progressBar.getProgressDrawable().setColorFilter(Color.BLACK, android.graphics.PorterDuff.Mode.SRC_IN);
         gifImageView.setVisibility(View.INVISIBLE);
-//        gif_run = view.findViewById(R.id.gifImageView_run);
-//        gif_walk = view.findViewById(R.id.gifImageView_walk);
-
-//        gif_run.setVisibility(View.INVISIBLE);
-//        gif_walk.setVisibility(View.INVISIBLE);
+        imageView_tracking.setVisibility(View.INVISIBLE);
+        linearLayout_steps_counter.setVisibility(View.INVISIBLE);
 
 
         start_btn.setOnClickListener(new View.OnClickListener() {
@@ -257,10 +242,14 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     if (start) {
                         recording = Boolean.TRUE;
                         firstChunk = Boolean.TRUE;
+                        linearLayout_steps_counter.setVisibility(View.VISIBLE);
+                        imageView_tracking.setVisibility(View.VISIBLE);
                         start_btn.setText("Stop");
                         start = false;
                     } else {
                         recording = Boolean.FALSE;
+                        imageView_tracking.setVisibility(View.INVISIBLE);
+                        gifImageView.setVisibility(View.INVISIBLE);
                         PyObject obj = pyobj.callAttr("main", received_chunk_values, 8.9);
                         int numberSteps = obj.toInt();
                         estimatedNumberOfSteps += numberSteps;
@@ -438,7 +427,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     if (first) {
                         first = Boolean.FALSE;
                         start_time = floatTime;
-                        lastTimeFallDetected = floatTime;
+                        lastTimeFallDetected = System.currentTimeMillis();
                     }
 
                     floatTime -= start_time;
@@ -453,6 +442,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     float norma = (float) Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
                     received_chunk_values.add(norma);
 
+                    System.out.println("n = " + norma);  // todo debug
+
                     if (firstChunk) {
                         lastTime = floatTime;
                         firstChunk = Boolean.FALSE;
@@ -462,10 +453,10 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                     double timeStamp = 3;
                     if (currentTime - lastTime > timeStamp) {
                         // send it to python
-                        double stepsThreshold = 8.9;
+                        double stepsThreshold = 10.5;
                         PyObject obj = pyobj.callAttr("main", received_chunk_values, stepsThreshold);
                         int numberSteps = obj.toInt();
-                        double fallThreshold = 17.0;
+                        double fallThreshold = 18;
                         // check status run or walk
                         CheckStatus(numberSteps);
                         // check if fall
@@ -476,7 +467,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         } else {
                             gifImageView.setVisibility(View.INVISIBLE);
                         }
-                        if (numberPeaks > 2) {
+                        if (numberPeaks > 0) {
                             // fall detected
                             showFallDetectedDialog(currentTime, FallDetected);
                         }
@@ -501,19 +492,20 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void CheckStatus(int numberSteps) {
-//        if (numberSteps > 8) {
-//            gif_run.setVisibility(View.VISIBLE);
-//            gif_walk.setVisibility(View.INVISIBLE);
-//        } else if (numberSteps > 2){
-//            gif_run.setVisibility(View.INVISIBLE);
-//            gif_walk.setVisibility(View.VISIBLE);
-//        } else {
-//            gif_run.setVisibility(View.INVISIBLE);
-//            gif_walk.setVisibility(View.INVISIBLE);
-//        }
+
     }
 
     private void showFallDetectedDialog(float detectTime, String msg) {
+
+        float diff = (System.currentTimeMillis() - lastTimeFallDetected) / 1000F;
+        System.out.println(diff);
+
+        if (diff < 30) {
+            toast("Detection already sent.");
+            return;
+        }
+
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Fall Detected");
         builder.setMessage("Are you okay?");
@@ -534,18 +526,13 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Call the FallHandler function here
-                if (detectTime - lastTimeFallDetected > 5) {
-                    toast("Fall Detected. Not sent. multy detect.");
-                    return;
-                } else if (detectTime - lastTimeFallDetected > 60 || detectTime - lastTimeFallDetected < 0) {
-                    FallHandler(msg);
-                    dialog.dismiss();
-                    lastTimeFallDetected = detectTime;
-                }
+                FallHandler(msg);
+                dialog.dismiss();
+                lastTimeFallDetected = System.currentTimeMillis();
             }
         });
 
-
+        System.out.println(System.currentTimeMillis());  // todo debug
         // Create a TextView for the timer
         TextView timerTextView = new TextView(getActivity());
         LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
@@ -602,7 +589,6 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
 
     private void FallHandler(String msg) {
         SendSMS(msg);
-        toast("Fall detected. Emergency SMS sent.");
     }
 
 

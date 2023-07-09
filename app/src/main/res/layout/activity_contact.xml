@@ -14,14 +14,14 @@
 
     <TextView
         android:id="@+id/textView5"
-        android:textColor="@color/black"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="64dp"
         android:text="Fill in the Emergency Contact fileds:"
+        android:textColor="@color/black"
         android:textSize="18sp"
         app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="96dp"/>
+        tools:layout_editor_absoluteX="96dp" />
 
     <EditText
         android:textColor="@color/black"
@@ -75,29 +75,40 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textview_number" />
 
-    <ProgressBar
-        android:id="@+id/loading"
+
+    <ImageButton
+        android:id="@+id/imageButton_reset_contact"
+        android:layout_width="66dp"
+        android:layout_height="63dp"
+        android:background="@drawable/round_style"
+        android:backgroundTint="@color/color1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView8"
+        app:srcCompat="@drawable/retry" />
+
+    <TextView
+        android:id="@+id/textView8"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
         android:layout_marginTop="64dp"
-        android:layout_marginBottom="64dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/textview_number"
-        app:layout_constraintStart_toStartOf="@+id/textview_number"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3" />
+        android:text="Reset"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/login" />
 
     <LinearLayout
         android:id="@+id/linearLayout3"
         android:layout_width="412dp"
         android:layout_height="238dp"
-        android:layout_marginTop="24dp"
         android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/login">
+        app:layout_constraintTop_toBottomOf="@+id/imageButton_reset_contact">
 
         <TextView
             android:id="@+id/textView6"
@@ -169,33 +180,6 @@
         </LinearLayout>
 
     </LinearLayout>
-
-    <ImageButton
-        android:id="@+id/imageButton_reset_contact"
-        android:layout_width="66dp"
-        android:layout_height="63dp"
-        android:layout_marginTop="4dp"
-        android:background="@drawable/round_style"
-        android:backgroundTint="@color/color1"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView8"
-        app:layout_constraintVertical_bias="0.0"
-        app:srcCompat="@drawable/retry" />
-
-    <TextView
-        android:id="@+id/textView8"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="Reset"
-        android:textColor="@color/black"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

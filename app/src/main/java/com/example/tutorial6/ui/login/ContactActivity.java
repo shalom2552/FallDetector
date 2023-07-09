@@ -146,7 +146,6 @@ public class ContactActivity extends AppCompatActivity {
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                loadingProgressBar.setVisibility(View.VISIBLE);
 //                loginViewModel.login(usernameEditText.getText().toString(),
 //                        phoneNumberEditText.getText().toString());
                 saveToCSV(usernameEditText.getText().toString(), phoneNumberEditText.getText().toString());

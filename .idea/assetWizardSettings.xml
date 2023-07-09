@@ -81,8 +81,8 @@
                                             <option name="values">
                                               <map>
                                                 <entry key="color" value="000000" />
-                                                <entry key="imagePath" value="D:\Courses\semester_8\IoT\Project\partB\gif\logo.png" />
-                                                <entry key="scalingPercent" value="88" />
+                                                <entry key="imagePath" value="D:\Courses\semester_8\IoT\Project\partB\gif\introLogoGreen.png" />
+                                                <entry key="scalingPercent" value="109" />
                                               </map>
                                             </option>
                                           </PersistentState>
