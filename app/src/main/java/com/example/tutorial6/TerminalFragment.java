@@ -84,8 +84,8 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     TextView textview_number_steps;
     TextView textView_bt_status;
 
-    ImageView gif_run;
-    ImageView gif_walk;
+//    ImageView gif_run;
+//    ImageView gif_walk;
 
     Float start_time;
     Boolean first = Boolean.TRUE;
@@ -93,8 +93,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     PyObject pyobj;
     ImageButton reconnect_btn;
     ImageButton set_contact_btn;
-    ImageButton clear_steps_btn;
+    LinearLayout linearLayout_steps_counter;
     ProgressBar progressBar;
+    ImageView gifImageView;
 
     public String EmergencyAlert = "\nEmergency Alert: \nThis message is to inform you that immediate assistance is required. \nThe fall detection feature on the app has been triggered, indicating a potential emergency situation. Please act promptly to provide the necessary aid. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you.";
     public String FallDetected = "\nFall Detected Alert: \nWe regret to inform you that a fall has been detected. \nThe app's fall detection feature has been triggered, indicating a potential injury or distress. Please reach out to the individual as soon as possible to ensure their well-being. \n\nYou have received this message because you are registered as an emergency contact in the fall app. Thank you for your swift action.";
@@ -176,6 +177,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         super.onDetach();
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void onResume() {
         super.onResume();
@@ -198,7 +200,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         }
 
         if (contactName != null || contactNumber != null) {
-            textViewContactName.setText(contactName);
+            textViewContactName.setText(contactName + " - " + contactNumber);
         } else {
             textViewContactName.setText("Empty");
         }
@@ -227,19 +229,21 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
         View view = inflater.inflate(R.layout.fragment_terminal, container, false);
 
         Button start_btn = view.findViewById(R.id.btn_start);
-        clear_steps_btn = view.findViewById(R.id.reset_count);
+        linearLayout_steps_counter = view.findViewById(R.id.linearLayout_steps_counter);
         set_contact_btn = view.findViewById(R.id.btn_set_contact);
         reconnect_btn = view.findViewById(R.id.imageButton);
         progressBar = view.findViewById(R.id.progressBar);
+        gifImageView = view.findViewById(R.id.gifImageView);
 
         textview_number_steps = (TextView) view.findViewById(R.id.textview_number_steps);
         textView_bt_status = view.findViewById(R.id.textview_connected_status);
+//        progressBar.getProgressDrawable().setColorFilter(Color.BLACK, android.graphics.PorterDuff.Mode.SRC_IN);
+        gifImageView.setVisibility(View.INVISIBLE);
+//        gif_run = view.findViewById(R.id.gifImageView_run);
+//        gif_walk = view.findViewById(R.id.gifImageView_walk);
 
-        gif_run = view.findViewById(R.id.gifImageView_run);
-        gif_walk = view.findViewById(R.id.gifImageView_walk);
-
-        gif_run.setVisibility(View.INVISIBLE);
-        gif_walk.setVisibility(View.INVISIBLE);
+//        gif_run.setVisibility(View.INVISIBLE);
+//        gif_walk.setVisibility(View.INVISIBLE);
 
 
         start_btn.setOnClickListener(new View.OnClickListener() {
@@ -270,7 +274,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             }
         });
 
-        clear_steps_btn.setOnClickListener(new View.OnClickListener() {
+        linearLayout_steps_counter.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 clearSteps();
@@ -467,6 +471,11 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                         // check if fall
                         PyObject obj2 = pyobj.callAttr("main", received_chunk_values, fallThreshold);
                         int numberPeaks = obj2.toInt();
+                        if (numberSteps > 1) {
+                            gifImageView.setVisibility(View.VISIBLE);
+                        } else {
+                            gifImageView.setVisibility(View.INVISIBLE);
+                        }
                         if (numberPeaks > 2) {
                             // fall detected
                             showFallDetectedDialog(currentTime, FallDetected);
@@ -492,16 +501,16 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
     private void CheckStatus(int numberSteps) {
-        if (numberSteps > 8) {
-            gif_run.setVisibility(View.VISIBLE);
-            gif_walk.setVisibility(View.INVISIBLE);
-        } else if (numberSteps > 2){
-            gif_run.setVisibility(View.INVISIBLE);
-            gif_walk.setVisibility(View.VISIBLE);
-        } else {
-            gif_run.setVisibility(View.INVISIBLE);
-            gif_walk.setVisibility(View.INVISIBLE);
-        }
+//        if (numberSteps > 8) {
+//            gif_run.setVisibility(View.VISIBLE);
+//            gif_walk.setVisibility(View.INVISIBLE);
+//        } else if (numberSteps > 2){
+//            gif_run.setVisibility(View.INVISIBLE);
+//            gif_walk.setVisibility(View.VISIBLE);
+//        } else {
+//            gif_run.setVisibility(View.INVISIBLE);
+//            gif_walk.setVisibility(View.INVISIBLE);
+//        }
     }
 
     private void showFallDetectedDialog(float detectTime, String msg) {
@@ -528,7 +537,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
                 if (detectTime - lastTimeFallDetected > 5) {
                     toast("Fall Detected. Not sent. multy detect.");
                     return;
-                } else if  (detectTime - lastTimeFallDetected > 60 || detectTime - lastTimeFallDetected < 0){
+                } else if (detectTime - lastTimeFallDetected > 60 || detectTime - lastTimeFallDetected < 0) {
                     FallHandler(msg);
                     dialog.dismiss();
                     lastTimeFallDetected = detectTime;
@@ -567,7 +576,7 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
             public void onTick(long millisUntilFinished) {
                 // Update the timer text
                 long secondsRemaining = millisUntilFinished / 1000;
-                String timerText = "Timer: " + secondsRemaining + " seconds";
+                String timerText = "\t\t\t\tTimer: " + secondsRemaining + " seconds";
                 timerTextView.setTextColor(Color.WHITE);
                 timerTextView.setTextSize(12);
                 timerTextView.setText(timerText);
@@ -591,10 +600,9 @@ public class TerminalFragment extends Fragment implements ServiceConnection, Ser
     }
 
 
-
     private void FallHandler(String msg) {
-            SendSMS(msg);
-            toast("Fall detected. Emergency SMS sent.");
+        SendSMS(msg);
+        toast("Fall detected. Emergency SMS sent.");
     }
 
 
