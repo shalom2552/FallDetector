@@ -20,14 +20,17 @@
         android:text="Fill in the Emergency Contact fileds:"
         android:textSize="18sp"
         app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="96dp" />
+        tools:layout_editor_absoluteX="96dp"/>
 
     <EditText
+        android:textColor="@color/black"
+        android:background="@drawable/fields"
         android:id="@+id/username"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:hint="@string/contact_name"
+        android:textColorHint="@color/color5"
         android:inputType="textPersonName"
         android:selectAllOnFocus="true"
         app:layout_constraintEnd_toEndOf="parent"
@@ -36,11 +39,14 @@
 
 
     <EditText
+        android:textColor="@color/black"
+        android:background="@drawable/fields"
         android:id="@+id/textview_number"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:hint="@string/phone_number"
+        android:textColorHint="@color/color5"
         android:imeActionLabel="@string/action_sign_in_short"
         android:imeOptions="actionDone"
         android:inputType="numberSigned"
@@ -50,6 +56,7 @@
         app:layout_constraintTop_toBottomOf="@+id/username" />
 
     <Button
+        android:background="@drawable/roundstyle"
         android:id="@+id/login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -59,6 +66,7 @@
         android:enabled="false"
         android:text="@string/action_sign_in"
         android:textColor="@color/black"
+        android:padding="15dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.497"
@@ -138,6 +146,7 @@
         </LinearLayout>
 
         <Button
+            android:background="@drawable/roundstyle"
             android:id="@+id/button_back_contact"
             android:layout_width="match_parent"
             android:layout_height="68dp"
@@ -148,6 +157,7 @@
     </LinearLayout>
 
     <ImageButton
+        android:background="@drawable/roundstyle"
         android:id="@+id/imageButton_reset_contact"
         android:layout_width="66dp"
         android:layout_height="63dp"

@@ -49,14 +49,15 @@
 
         <ImageButton
             android:id="@+id/reset_count"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
-            android:backgroundTint="@color/color1"
-            android:src="@drawable/retry"
-            android:scaleType="centerInside"
-            android:padding="8dp"
+            android:layout_width="55dp"
+            android:layout_height="56dp"
             android:layout_marginEnd="16dp"
-            android:contentDescription="@string/reset_button_description" />
+            android:background="@drawable/roundstyle"
+            android:backgroundTint="@color/color1"
+            android:contentDescription="@string/reset_button_description"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            android:src="@drawable/clear" />
 
         <Space
             android:layout_width="wrap_content"
@@ -96,7 +97,7 @@
                     android:text="0"
                     android:textAlignment="center"
                     android:textColor="@color/white"
-                    android:textSize="36sp" />
+                    android:textSize="24sp" />
 
             </LinearLayout>
         </LinearLayout>
@@ -126,13 +127,13 @@
     </LinearLayout>
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_marginTop="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:paddingTop="24dp"
-        android:paddingBottom="24dp">
+        android:layout_gravity="center"
+        >
 
         <TextView
             android:id="@+id/textview_connected_status"
@@ -144,20 +145,21 @@
             android:textSize="24sp" />
 
         <ProgressBar
+            android:layout_marginTop="8dp"
             android:id="@+id/progressBar"
             style="?android:attr/progressBarStyle"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp" />
+            android:layout_height="wrap_content"/>
 
         <ImageButton
+            android:layout_marginTop="8dp"
             android:id="@+id/imageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="83dp"
+            android:layout_height="69dp"
+            android:background="@drawable/roundstyle"
             android:backgroundTint="@color/color1"
-            android:src="@drawable/retry"
             android:scaleType="centerInside"
-            android:layout_marginTop="16dp" />
+            android:src="@drawable/retry" />
 
     </LinearLayout>
 
@@ -165,11 +167,12 @@
         android:id="@+id/linearLayout7"
         android:layout_width="match_parent"
         android:layout_height="84dp"
-        android:layout_margin="4dp"
+        android:layout_marginTop="80dp"
         android:gravity="center"
         android:orientation="horizontal">
 
         <ImageButton
+            android:background="@drawable/roundstyle"
             android:id="@+id/btn_send_sms"
             android:layout_width="100dp"
             android:layout_height="72dp"
@@ -179,10 +182,11 @@
             android:src="@drawable/sos" />
 
         <Space
-            android:layout_width="110dp"
+            android:layout_width="148dp"
             android:layout_height="match_parent" />
 
         <ImageButton
+            android:background="@drawable/roundstyle"
             android:id="@+id/btn_set_contact"
             android:layout_width="100dp"
             android:layout_height="72dp"
@@ -198,10 +202,12 @@
         android:layout_height="150dp"
         android:gravity="center"
         android:orientation="horizontal"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp">
+        android:padding="8dp"
+        android:layout_marginTop="32dp"
+        >
 
         <Button
+            android:background="@drawable/roundstyle"
             android:id="@+id/btn_start"
             android:layout_width="350dp"
             android:layout_height="100dp"
